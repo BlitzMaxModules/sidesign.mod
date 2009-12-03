@@ -104,7 +104,7 @@ Type TBrush
 		If index+1>no_texs Then no_texs=index+1
 		
 		If frame<0 Then frame=0
-		If frame>texture.no_frames-1 Then frame=texture.no_frames-1 
+'		If frame>texture.no_frames-1 Then frame=texture.no_frames-1 
 		tex_frame=frame
 	
 	End Method

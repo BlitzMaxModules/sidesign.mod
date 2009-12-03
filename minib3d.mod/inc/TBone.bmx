@@ -32,45 +32,7 @@ Type TBone Extends TEntity
 		' new bone
 		Local bone:TBone=New TBone
 		
-		' copy contents of child list before adding parent
-		For Local ent:TEntity=EachIn child_list
-			ent.CopyEntity(bone)
-		Next
-		
-		' add parent, add to list
-		bone.AddParent(parent_ent:TEntity)
-		bone.EntityListAdd(entity_list)
-		
-		' update matrix
-		If bone.parent<>Null
-			bone.mat.Overwrite(bone.parent.mat)
-		Else
-			bone.mat.LoadIdentity()
-		EndIf
-		
-		' copy entity info
-		
-		bone.mat.Multiply(mat)
-
-		bone.px#=px#
-		bone.py#=py#
-		bone.pz#=pz#
-		bone.sx#=sx#
-		bone.sy#=sy#
-		bone.sz#=sz#
-		bone.rx#=rx#
-		bone.ry#=ry#
-		bone.rz#=rz#
-		bone.qw#=qw#
-		bone.qx#=qx#
-		bone.qy#=qy#
-		bone.qz#=qz#
-		
-		bone.name$=name$
-		bone.class$=class$
-		bone.order=order
-		bone.hide=False
-		
+		Clone(bone,parent_ent)
 		' copy bone info
 		
 		bone.n_px#=n_px#
@@ -116,6 +78,8 @@ Type TBone Extends TEntity
 	' Same as UpdateChildren in TEntity except it negates z value of bone matrices so that children are transformed
 	' in correct z direction
 	Function UpdateBoneChildren(ent_p:TEntity)
+		'skid
+		Assert False
 		Return
 		For Local ent_c:TEntity=EachIn ent_p.child_list
 			
@@ -134,7 +98,7 @@ Type TBone Extends TEntity
 				
 			EndIf
 			
-			UpdateChildren(ent_c:TEntity)
+'			UpdateChildren(ent_c:TEntity)
 					
 		Next
 	

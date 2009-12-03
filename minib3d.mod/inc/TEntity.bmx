@@ -1,13 +1,38 @@
+' todo 
+
+' rot functions to derive return value from global or local matrix
+
+' px->mat[3,0] py->mat[3,1]  pz->mat[3,2]
+
+' sx->mat[0,3] sy->mat[1,3]  sz->mat[2,3]
+
+' entity_root provides single dummy world pivot for transformation hierachy
+
 Type TEntity
 
 	Global entity_list:TList=CreateList()
+	
+	Global entity_root:TEntity=CreatePivot()
+
+	Global temp_mat:TMatrix=New TMatrix
+
+	Global tformed_x#
+	Global tformed_y#
+	Global tformed_z#
 
 	Field child_list:TList=CreateList()
 
-	Field parent:TEntity
-	
+	Field parent:TEntity=entity_root
+
+' local orientation scale and position in 4x4 land
+
 	Field mat:TMatrix=New TMatrix
-	Field px#,py#,pz#,sx#=1.0,sy#=1.0,sz#=1.0,rx#,ry#,rz#,qw#,qx#,qy#,qz#
+
+	Field cycle:Int
+	Field dirty:Int 
+
+	Field global_mat:TMatrix=New TMatrix
+	Field global_inv_mat:TMatrix=New TMatrix
 	
 	Field name$
 	Field class$
@@ -25,6 +50,10 @@ Type TEntity
 	Field no_collisions,collision:TCollisionImpact[]
 	Field pick_mode,obscurer
 
+' quaternion animation state
+
+'	Field qw#,qx#,qy#,qz#
+
 	Field anim ' true if mesh contains anim data
 	Field anim_render ' true to render as anim mesh
 	Field anim_mode
@@ -38,10 +67,6 @@ Type TEntity
 	Field no_seqs=0
 	Field anim_update
 	
-	Global tformed_x#
-	Global tformed_y#
-	Global tformed_z#
-	
 	' used by TCollisions
 	Field old_x#
 	Field old_y#
@@ -49,7 +74,106 @@ Type TEntity
 		
 	Field link:TLink ' entity_list tlink, stored for quick removal of entity from list ***note*** not currently used to remove entity from list
 
+' private helpers
+
+	Method UpdateMat()
+		Local ent:TEntity
+		Assert Self<>entity_root
+		dirty=True
+	End Method
+	
+	Method Transform()
+		Local ent:TEntity
+		If dirty
+			cycle=cycle+1
+			If(cycle=6) cycle=0
+			global_inv_mat.Invert(global_mat)
+			For ent= EachIn child_list			
+				ent.mat.freshen(cycle)
+				ent.global_mat.overwrite(ent.mat)
+				ent.global_mat.multiply(global_mat)			
+				ent.dirty=True
+			Next		
+			dirty=False
+		EndIf
+		For ent= EachIn child_list
+			ent.Transform
+		Next
+	End Method
+
+	Method AddParent(parent_ent:TEntity,glob=True)
+
+		If parent_ent=Null
+			parent_ent=entity_root
+		EndIf
+
+		If parent<>Null
+			For Local ent:TEntity=EachIn parent.child_list
+				If ent=Self Then ListRemove(parent.child_list,Self)
+			Next
+		EndIf
+		
+		parent=parent_ent
+						
+		mat.Overwrite(global_mat)			
+		If parent	' warning - may be static root	
+			' add self to parent_ent child list
+			ListAddLast(parent.child_list,Self)						
+			mat.Multiply(parent.global_inv_mat)
+		EndIf
+			
+		UpdateMat()
+	End Method
+		
+	Method GetParent:TEntity()
+	
+		If parent=entity_root
+			Return Null
+		EndIf
+
+		Return parent
+
+	End Method
+
 	Method CopyEntity:TEntity(parent_ent:TEntity=Null) Abstract
+
+	Method Clone(cam:TEntity,parent_ent:TEntity)
+
+		' copy contents of child list before adding parent
+
+		For Local ent:TEntity=EachIn child_list
+			ent.CopyEntity(cam)
+		Next
+		
+		' lists
+		
+		' add parent, add to list
+		cam.AddParent(parent_ent)
+		cam.EntityListAdd(entity_list)
+		
+		' add to collision entity list
+		If collision_type<>0
+			TCollisionPair.ent_lists[collision_type].AddLast(cam)
+		EndIf
+		
+		' add to pick entity list
+		If pick_mode<>0
+			TPick.ent_list.AddLast(cam)
+		EndIf
+		
+		' update matrix
+		If cam.parent<>Null
+			cam.mat.Overwrite(cam.parent.mat)
+		Else
+			cam.mat.LoadIdentity()
+		EndIf
+		
+		cam.name$=name$
+		cam.class$=class$
+		cam.order=order
+		cam.hide=False
+	End Method
+
 	Method Update() Abstract
 
 	Method New()
@@ -97,182 +221,55 @@ Type TEntity
 		' free children entities
 		For ent=EachIn child_list
 			ent.FreeEntity()
-			ent=Null
 		Next
+		
+		child_list=Null
 
 	End Method
 
 	' Entity movement
 
 	Method PositionEntity(x#,y#,z#,glob=False)
-
-		px=x
-		py=y
-		pz=-z
-
-		' conv glob to local. x/y/z always local to parent or global if no parent
-		If glob=True And parent<>Null
-			
-			px=px-parent.EntityX(True)
-			py=py-parent.EntityY(True)
-			pz=pz+parent.EntityZ(True) ' z reversed
-			
-			Local prx#=-parent.EntityPitch(True)
-			Local pry#=parent.EntityYaw(True)
-			Local prz#=parent.EntityRoll(True)
-			
-			Local psx#=parent.EntityScaleX(True)
-			Local psy#=parent.EntityScaleY(True)
-			Local psz#=parent.EntityScaleZ(True)
-						
-			Local new_mat:TMatrix=New TMatrix
-			new_mat.LoadIdentity()
-			new_mat.Scale(1.0/psx#,1.0/psy#,1.0/psz#)
-			new_mat.RotateRoll(-prz)
-			new_mat.RotatePitch(-prx)
-			new_mat.RotateYaw(-pry)
-			new_mat.Translate(px,py,pz)
-			
-			px=new_mat.grid[3,0]
-			py=new_mat.grid[3,1]
-			pz=new_mat.grid[3,2]
-
+		If glob=True
+			parent.global_inv_mat.Transform(x,y,z)
 		EndIf
-	
-		If parent<>Null
-		
-			mat.Overwrite(parent.mat)
-			UpdateMat()
-		
-		Else ' glob=true or false
-		
-			UpdateMat(True)
-			
-		EndIf
-		
-		If child_list.IsEmpty()<>True Then UpdateChildren(Self)
-
+		mat.grid[3,0]=x
+		mat.grid[3,1]=y
+		mat.grid[3,2]=z
+		UpdateMat()		
 	End Method
 		
 	Method MoveEntity(mx#,my#,mz#)
-
-		mz#=-mz
-
-		Local new_mat:TMatrix=New TMatrix
-		new_mat.LoadIdentity()
-		new_mat.RotateYaw(ry)
-		new_mat.RotatePitch(rx)
-		new_mat.RotateRoll(rz)
-		new_mat.Translate(mx#,my#,mz#)
-	
-		mx=new_mat.grid[3,0]
-		my=new_mat.grid[3,1]
-		mz=new_mat.grid[3,2]
-		
-		px=px+mx
-		py=py+my
-		pz=pz+mz
-
-		If parent<>Null
-		
-			mat.Overwrite(parent.mat)
-			UpdateMat()
-		
-		Else ' glob=true or false
-		
-			UpdateMat(True)
-			
-		EndIf
-		
-		UpdateChildren(Self)
-
+		mat.grid[3,0]:+mx
+		mat.grid[3,1]:+my
+		mat.grid[3,2]:-mz
+		UpdateMat()
 	End Method
 
 	Method TranslateEntity(tx#,ty#,tz#,glob=False)
-
-		'Local tx#=x
-		'Local ty#=y
-		tz#=-tz#
-
-		' conv glob to local. x/y/z always local to parent or global if no parent
-		If glob=True And parent<>Null
-
-			Local ax#=-parent.EntityPitch(True)
-			Local ay#=parent.EntityYaw(True)
-			Local az#=parent.EntityRoll(True)
-						
-			Local new_mat:TMatrix=New TMatrix
-			new_mat.LoadIdentity()
-			new_mat.RotateRoll(-az)
-			new_mat.RotatePitch(-ax)
-			new_mat.RotateYaw(-ay)
-			new_mat.Translate(tx,ty,tz)
-
-			tx=new_mat.grid[3,0]
-			ty=new_mat.grid[3,1]
-			tz=new_mat.grid[3,2]
-			
+		If glob=True
+			parent.global_inv_mat.TransformVector(tx,ty,tz)
+		Else
+			mat.TransformVector(tx,ty,tz)
 		EndIf
-		
-		px=px+tx
-		py=py+ty
-		pz=pz+tz
-
-		If parent<>Null
-		
-			mat.Overwrite(parent.mat)
-			UpdateMat()
-		
-		Else ' glob=true or false
-		
-			UpdateMat(True)
-			
-		EndIf
-		
-		If child_list.IsEmpty()<>True Then UpdateChildren(Self)
+		mat.grid[3,0]:+tx
+		mat.grid[3,1]:+ty
+		mat.grid[3,2]:+tz
+		UpdateMat()
 
 	End Method
 	
 	Method ScaleEntity(x#,y#,z#,glob=False)
+		mat.grid[0,3]=x
+		mat.grid[1,3]=y
+		mat.grid[2,3]=x
 
-		sx#=x#
-		sy#=y#
-		sz#=z#
-
-		' conv glob to local. x/y/z always local to parent or global if no parent
-		If glob=True And parent<>Null
-			
-			Local ent:TEntity=Self
-						
-			Repeat
-
-				sx#=sx#/ent.parent.sx#
-				sy#=sy#/ent.parent.sy#
-				sz#=sz#/ent.parent.sz#
-	
-				ent=ent.parent
-									
-			Until ent.parent=Null	
-	
-		EndIf
-	
-		If parent<>Null
-		
-			mat.Overwrite(parent.mat)
-			UpdateMat()
-		
-		Else ' glob=true or false
-		
-			UpdateMat(True)
-			
-		EndIf
-		
-		If child_list.IsEmpty()<>True Then UpdateChildren(Self)
+		UpdateMat()
 
 	End Method
 
 	Method RotateEntity(x#,y#,z#,glob=False)
-
+Rem skid
 		rx=-x#
 		ry=y#
 		rz=z#
@@ -285,52 +282,15 @@ Type TEntity
 			rz=rz-parent.EntityRoll(True)
 		
 		EndIf
-		
-		If parent<>Null
-		
-			mat.Overwrite(parent.mat)
+EndRem		
 			UpdateMat()
-		
-		Else ' glob=true or false
-		
-			UpdateMat(True)
-			
-		EndIf
-		
-		If child_list.IsEmpty()<>True Then UpdateChildren(Self)
 
 	End Method
 
 	Method TurnEntity(x#,y#,z#,glob=False)
-
-		Local tx#=-x
-		Local ty#=y
-		Local tz#=z
-
-		' conv glob to local. x/y/z always local to parent or global if no parent
-		If glob=True And parent<>Null
-
-			'
-			
-		EndIf
-				
-		rx=rx+tx
-		ry=ry+ty
-		rz=rz+tz
-
-		If parent<>Null
-		
-			mat.Overwrite(parent.mat)
-			UpdateMat()
-		
-		Else ' glob=true or false
-		
-			UpdateMat(True)
-			
-		EndIf
-		
-		If child_list.IsEmpty()<>True Then UpdateChildren(Self)
-
+		temp_mat.FromRot(x,y,z)
+		mat.Multiply(temp_mat)
+		UpdateMat()
 	End Method
 
 	' Function by mongia2
@@ -561,7 +521,7 @@ Type TEntity
 		If index+1>brush.no_texs Then brush.no_texs=index+1
 		
 		If frame<0 Then frame=0
-		If frame>texture.no_frames-1 Then frame=texture.no_frames-1 
+'		If frame>texture.no_frames-1 Then frame=texture.no_frames-1 
 		brush.tex_frame=frame
 	
 	End Method
@@ -657,93 +617,15 @@ Type TEntity
 	
 	End Method
 	
-	Method EntityParent(parent_ent:TEntity,glob=True)
-
-		'' remove old parent
-
-		' get global values
-		Local gpx:Float=EntityX(True)
-		Local gpy:Float=EntityY(True)
-		Local gpz:Float=EntityZ(True)
-		
-		Local grx:Float=EntityPitch(True)
-		Local gry:Float=EntityYaw(True)
-		Local grz:Float=EntityRoll(True)
-		
-		Local gsx:Float=EntityScaleX(True)
-		Local gsy:Float=EntityScaleY(True)
-		Local gsz:Float=EntityScaleZ(True)
-	
-		' remove self from parent's child list
-		If parent<>Null
-			For Local ent:TEntity=EachIn parent.child_list
-				If ent=Self Then ListRemove(parent.child_list,Self)
-			Next
-			parent=Null
-		EndIf
-
-		' entity no longer has parent, so set local values to equal global values
-		' must get global values before we reset transform matrix with UpdateMat
-		px#=gpx
-		py#=gpy
-		pz#=-gpz
-		rx#=-grx
-		ry#=gry
-		rz#=grz
-		sx#=gsx
-		sy#=gsy
-		sz#=gsz
-		
-		''
-		
-		' No new parent
-		If parent_ent=Null
-			UpdateMat(True)
-			Return
-		EndIf
-		
-		' New parent
-	
-		If parent_ent<>Null
-			
-			If glob=True
-
-				AddParent(parent_ent)
-				'UpdateMat()
-
-				PositionEntity(gpx,gpy,gpz,True)
-				RotateEntity(grx,gry,grz,True)
-				ScaleEntity(gsx,gsy,gsz,True)
-
-			Else
-			
-				AddParent(parent_ent)
-				UpdateMat()
-				
-			EndIf
-			
-		EndIf
-
-	End Method
-		
-	Method GetParent:TEntity()
-	
-		Return parent
-	
-	End Method
 
 	' Entity state
 
 	Method EntityX#(glob=False)
 	
-		If glob=False
-		
-			Return px
-		
-		Else
-		
-			Return mat.grid[3,0]
-		
+		If glob=False		
+			Return mat.grid[3,0]		
+		Else		
+			Return global_mat.grid[3,0]
 		EndIf
 	
 	End Method
@@ -752,7 +634,7 @@ Type TEntity
 	
 		If glob=False
 		
-			Return py
+			Return mat.grid[3,1]		
 		
 		Else
 		
@@ -766,7 +648,7 @@ Type TEntity
 	
 		If glob=False
 		
-			Return -pz
+			Return -mat.grid[3,2]		
 		
 		Else
 		
@@ -780,8 +662,7 @@ Type TEntity
 		
 		If glob=False
 		
-			Return -rx
-			
+			Return -ATan2( mat.grid[2,1],Sqr( mat.grid[2,0]*mat.grid[2,0]+mat.grid[2,2]*mat.grid[2,2] ) )	
 		Else
 		
 			Local ang#=ATan2( mat.grid[2,1],Sqr( mat.grid[2,0]*mat.grid[2,0]+mat.grid[2,2]*mat.grid[2,2] ) )
@@ -799,7 +680,11 @@ Type TEntity
 		
 		If glob=False
 		
-			Return ry
+			Local a#=mat.grid[2,0]
+			Local b#=mat.grid[2,2]
+			If a#<=0.0001 And a#>=-0.0001 Then a#=0
+			If b#<=0.0001 And b#>=-0.0001 Then b#=0
+			Return ATan2(a#,b#)
 			
 		Else
 		
@@ -817,7 +702,11 @@ Type TEntity
 		
 		If glob=False
 		
-			Return rz
+			Local a#=mat.grid[0,1]
+			Local b#=mat.grid[1,1]
+			If a#<=0.0001 And a#>=-0.0001 Then a#=0
+			If b#<=0.0001 And b#>=-0.0001 Then b#=0
+			Return ATan2(a#,b#)
 			
 		Else
 		
@@ -941,45 +830,14 @@ Type TEntity
 	
 	Function TFormPoint(x#,y#,z#,src_ent:TEntity,dest_ent:TEntity)
 	
-		Global mat:TMatrix=New TMatrix '***global***
-	
-		If src_ent<>Null
-
-			mat.Overwrite(src_ent.mat)
-			mat.Translate(x#,y#,-z#)
-			
-			x#=mat.grid[3,0]
-			y#=mat.grid[3,1]
-			z#=-mat.grid[3,2]
-		
+		If src_ent And src_ent.parent
+			src_ent.parent.global_mat.Transform(x,y,z)
 		EndIf
 
-		If dest_ent<>Null
-
-			mat.LoadIdentity()
-		
-			Local ent:TEntity=dest_ent
-			
-			Repeat
-	
-				mat.Scale(1.0/ent.sx,1.0/ent.sy,1.0/ent.sz)
-				mat.RotateRoll(-ent.rz)
-				mat.RotatePitch(-ent.rx)
-				mat.RotateYaw(-ent.ry)
-				mat.Translate(-ent.px,-ent.py,-ent.pz)																																																																																																																																																																																																																																																																																																																																									
-
-				ent=ent.parent
-			
-			Until ent=Null
-		
-			mat.Translate(x#,y#,-z#)
-			
-			x#=mat.grid[3,0]
-			y#=mat.grid[3,1]
-			z#=-mat.grid[3,2]
-			
+		If  dest_ent And dest_ent.parent
+			dest_ent.parent.global_inv_mat.Transform(x,y,z)
 		EndIf
-		
+
 		tformed_x#=x#
 		tformed_y#=y#
 		tformed_z#=z#
@@ -988,55 +846,15 @@ Type TEntity
 
 	Function TFormVector(x#,y#,z#,src_ent:TEntity,dest_ent:TEntity)
 	
-		Global mat:TMatrix=New TMatrix '***global***
 	
-		If src_ent<>Null
-
-			mat.Overwrite(src_ent.mat)
-			
-			mat.grid[3,0]=0
-			mat.grid[3,1]=0
-			mat.grid[3,2]=0
-			mat.grid[3,3]=1
-			mat.grid[0,3]=0
-			mat.grid[1,3]=0
-			mat.grid[2,3]=0
-				
-			mat.Translate(x#,y#,-z#)
-	
-			x#=mat.grid[3,0]
-			y#=mat.grid[3,1]
-			z#=-mat.grid[3,2]
-		
+		If src_ent.parent
+			src_ent.parent.global_mat.TransformVector(x,y,z)
 		EndIf
 
-		If dest_ent<>Null
-
-			mat.LoadIdentity()
-			'mat.Translate(x#,y#,z#)
-		
-			Local ent:TEntity=dest_ent
-			
-			Repeat
-	
-				mat.Scale(1.0/ent.sx,1.0/ent.sy,1.0/ent.sz)
-				mat.RotateRoll(-ent.rz)
-				mat.RotatePitch(-ent.rx)
-				mat.RotateYaw(-ent.ry)
-				'mat.Translate(-ent.px,-ent.py,-ent.pz)																																																																																																																																																																																																																																																																																																																																									
-
-				ent=ent.parent
-			
-			Until ent=Null
-		
-			mat.Translate(x#,y#,-z#)
-			
-			x#=mat.grid[3,0]
-			y#=mat.grid[3,1]
-			z#=-mat.grid[3,2]
-			
+		If  dest_ent.parent
+			dest_ent.parent.global_inv_mat.TransformVector(x,y,z)
 		EndIf
-		
+
 		tformed_x#=x#
 		tformed_y#=y#
 		tformed_z#=z#
@@ -1301,85 +1119,31 @@ Type TEntity
 	
 	Method EntityScaleX#(glob=False)
 	
-		If glob=True
-
-			If parent<>Null
-				
-				Local ent:TEntity=Self
-					
-				Local x#=sx#
-							
-				Repeat
-	
-					x#=x#*ent.parent.sx#
-
-					ent=ent.parent
-										
-				Until ent.parent=Null
-				
-				Return x#
-		
-			EndIf
-
+		If glob
+			Return global_mat.grid[0,3]
+		Else
+			Return mat.grid[0,3]
 		EndIf
-		
-		Return sx#
 		
 	End Method
 	
 	Method EntityScaleY#(glob=False)
 	
-		If glob=True
-
-			If parent<>Null
-				
-				Local ent:TEntity=Self
-					
-				Local y#=sy#
-							
-				Repeat
-	
-					y#=y#*ent.parent.sy#
-
-					ent=ent.parent
-										
-				Until ent.parent=Null
-				
-				Return y#
-		
-			EndIf
-
+		If glob
+			Return global_mat.grid[1,3]
+		Else
+			Return mat.grid[1,3]
 		EndIf
-		
-		Return sy#
 		
 	End Method
 	
 	Method EntityScaleZ#(glob=False)
 	
-		If glob=True
-
-			If parent<>Null
-				
-				Local ent:TEntity=Self
-					
-				Local z#=sz#
-							
-				Repeat
-	
-					z#=z#*ent.parent.sz#
-
-					ent=ent.parent
-										
-				Until ent.parent=Null
-				
-				Return z#
-		
-			EndIf
-
+		If glob
+			Return global_mat.grid[2,3]
+		Else
+			Return mat.grid[2,3]
 		EndIf
-		
-		Return sz#
 		
 	End Method
 
@@ -1522,52 +1286,7 @@ Type TEntity
 			
 	End Method
 	
-	' Internal - not recommended for general use
-
-	Method UpdateMat(load_identity=False)
-
-		If load_identity=True
-			mat.LoadIdentity()
-			mat.Translate(px,py,pz)
-			mat.Rotate(rx,ry,rz)
-			mat.Scale(sx,sy,sz)
-		Else
-			mat.Translate(px,py,pz)
-			mat.Rotate(rx,ry,rz)
-			mat.Scale(sx,sy,sz)
-		EndIf
-	
-	End Method
-	
-	Method AddParent(parent_ent:TEntity)
-	
-		' self.parent = parent_ent
-		parent:TEntity=parent_ent
 		
-		' add self to parent_ent child list
-		If parent<>Null
-
-			mat.Overwrite(parent.mat)
-		
-			ListAddLast(parent.child_list,Self)
-		
-		EndIf
-		
-	End Method
-	
-	Function UpdateChildren(ent_p:TEntity)
-	
-		For Local ent_c:TEntity=EachIn ent_p.child_list
-
-			ent_c.mat.Overwrite(ent_p.mat)
-			ent_c.UpdateMat()
-				
-			UpdateChildren(ent_c:TEntity)
-			
-		Next
-	
-	End Function
-
 	' unoptimised, unused
 	Method EntityDistanceSquared0#(ent2:TEntity)
 

@@ -394,6 +394,7 @@ Type TModel
 						piv.class$="Mesh"
 			
 						piv.name$=n_name$
+Rem skid
 						piv.px#=n_px#
 						piv.py#=n_py#
 						piv.pz#=n_pz#
@@ -403,11 +404,13 @@ Type TModel
 						piv.rx#=n_rx#
 						piv.ry#=n_ry#
 						piv.rz#=n_rz#
+
 						piv.qw#=n_qw#
 						piv.qx#=n_qx#
 						piv.qy#=n_qy#
 						piv.qz#=n_qz#
 								
+EndRem
 						'piv.UpdateMat(True)
 						piv.EntityListAdd(TEntity.entity_list)
 						last_ent=piv
@@ -444,6 +447,7 @@ Type TModel
 					mesh=New TMesh
 					mesh.class$="Mesh"
 					mesh.name$=n_name$
+Rem skid
 					mesh.px#=n_px#
 					mesh.py#=n_py#
 					mesh.pz#=n_pz#
@@ -457,6 +461,7 @@ Type TModel
 					mesh.qx#=n_qx#
 					mesh.qy#=n_qy#
 					mesh.qz#=n_qz#
+End Rem
 					
 					mesh.EntityListAdd(TEntity.entity_list)
 					last_ent=mesh
@@ -711,6 +716,7 @@ Type TModel
 
 					bo_bone.class$="Bone"
 					bo_bone.name$=n_name$
+Rem skid					
 					bo_bone.px#=n_px#
 					bo_bone.py#=n_py#
 					bo_bone.pz#=n_pz#
@@ -720,10 +726,12 @@ Type TModel
 					bo_bone.rx#=n_rx#
 					bo_bone.ry#=n_ry#
 					bo_bone.rz#=n_rz#
+
 					bo_bone.qw#=n_qw#
 					bo_bone.qx#=n_qx#
 					bo_bone.qy#=n_qy#
 					bo_bone.qz#=n_qz#
+End Rem					
 					
 					bo_bone.n_px#=n_px#
 					bo_bone.n_py#=n_py#

@@ -1,4 +1,7 @@
+
 Type TMatrix
+
+	Global identity:TMatrix=New TMatrix.LoadIdentity()
 
 	Field grid#[4,4]
 	
@@ -7,6 +10,8 @@ Type TMatrix
 		If LOG_NEW
 			DebugLog "New TMatrix"
 		EndIf
+		
+		LoadIdentity
 
 	End Method
 	
@@ -18,8 +23,89 @@ Type TMatrix
 
 	End Method
 	
-	Method LoadIdentity()
+	Method Transform(x# Var,y# Var,z# Var)
+		Local xx# = grid#[0,0]*x + grid#[0,1]*y + grid#[0,2]*z+ grid#[3,0]
+		Local yy# = grid#[1,0]*x + grid#[1,1]*y + grid#[1,2]*z+ grid#[3,1]
+		Local zz# = grid#[2,0]*x + grid#[2,1]*y + grid#[2,2]*z + grid#[3,2]
+		x=xx
+		y=yy
+		z=zz
+	End Method
 	
+	Method TransformVector(x# Var,y# Var,z# Var)
+		Local xx# = grid#[0,0]*x + grid#[0,1]*y + grid#[0,2]*z
+		Local yy# = grid#[1,0]*x + grid#[1,1]*y + grid#[1,2]*z
+		Local zz# = grid#[2,0]*x + grid#[2,1]*y + grid#[2,2]*z
+		x=xx
+		y=yy
+		z=zz
+	End Method
+
+' xx+yy+zz=1
+' x=/(1-yy+zz)
+
+	Method Freshen(row)
+		Select row
+Rem		
+			Case 0
+				grid[0,0]=grid[0,1]*grid[0,2]
+				grid[1,0]=grid[1,1]*grid[1,2]
+				grid[2,0]=grid[2,1]*grid[2,2]
+
+			Case 1
+				grid[0,1]=grid[0,0]*grid[0,2]
+				grid[1,1]=grid[1,0]*grid[1,2]
+				grid[2,1]=-grid[2,0]*grid[2,2]
+			Case 2
+				grid[0,2]=grid[0,1]*grid[0,0]
+				grid[1,2]=grid[1,1]*grid[1,0]
+				grid[2,2]=grid[2,1]*grid[2,0]
+			Case 3
+				grid[0,0]=grid[1,0]*grid[2,0]
+				grid[0,1]=grid[1,1]*grid[1,2]
+				grid[0,2]=grid[1,2]*grid[2,2]
+			Case 4
+				grid[1,0]=grid[0,0]*grid[2,0]
+				grid[1,1]=grid[0,1]*grid[2,1]
+				grid[1,2]=grid[0,2]*grid[2,2]
+			Case 5
+				grid[2,0]=grid[1,0]*grid[0,0]
+				grid[2,1]=grid[1,1]*grid[0,1]
+				grid[2,2]=grid[1,2]*grid[0,2]
+EndRem
+		End Select
+	End Method
+	Method Freshen2(row)
+		Select row
+			Case 0
+				grid[0,0]=Sqr(1-(grid[0,1]*grid[0,1]+grid[0,2]*grid[0,2]))
+				grid[1,0]=Sqr(1-(grid[1,1]*grid[1,1]+grid[1,2]*grid[1,2]))
+				grid[2,0]=Sqr(1-(grid[2,1]*grid[2,1]+grid[2,2]*grid[2,2]))
+			Case 1
+				grid[0,1]=Sqr(1-(grid[0,0]*grid[0,0]+grid[0,2]*grid[0,2]))
+				grid[1,1]=Sqr(1-(grid[1,0]*grid[1,0]+grid[1,2]*grid[1,2]))
+				grid[2,1]=Sqr(1-(grid[2,0]*grid[2,0]+grid[2,2]*grid[2,2]))
+			Case 2
+				grid[0,2]=Sqr(1-(grid[0,0]*grid[0,0]+grid[0,1]*grid[0,1]))
+				grid[1,2]=Sqr(1-(grid[1,0]*grid[1,0]+grid[1,1]*grid[1,1]))
+				grid[2,2]=Sqr(1-(grid[2,0]*grid[2,0]+grid[2,1]*grid[2,1]))
+			Case 3
+				grid[0,0]=Sqr(1-(grid[1,0]*grid[1,0]+grid[2,0]*grid[2,0]))
+				grid[0,1]=Sqr(1-(grid[1,1]*grid[1,1]+grid[2,1]*grid[1,2]))
+				grid[0,2]=Sqr(1-(grid[1,2]*grid[1,2]+grid[2,2]*grid[2,2]))
+			Case 4
+				grid[1,0]=Sqr(1-(grid[0,0]*grid[0,0]+grid[2,0]*grid[2,0]))
+				grid[1,1]=Sqr(1-(grid[0,1]*grid[0,1]+grid[2,1]*grid[2,1]))
+				grid[1,2]=Sqr(1-(grid[0,2]*grid[0,2]+grid[2,2]*grid[2,2]))
+			Case 5
+				grid[2,0]=Sqr(1-(grid[0,0]*grid[0,0]+grid[1,0]*grid[1,0]))
+				grid[2,1]=Sqr(1-(grid[0,1]*grid[0,1]+grid[1,1]*grid[1,1]))
+				grid[2,2]=Sqr(1-(grid[0,2]*grid[0,2]+grid[1,2]*grid[1,2]))
+		End Select
+	End Method
+
+	
+	Method LoadIdentity:TMatrix()	
 		grid[0,0]=1.0
 		grid[1,0]=0.0
 		grid[2,0]=0.0
@@ -31,40 +117,20 @@ Type TMatrix
 		grid[0,2]=0.0
 		grid[1,2]=0.0
 		grid[2,2]=1.0
-		grid[3,2]=0.0
-		
+		grid[3,2]=0.0		
 		grid[0,3]=0.0
 		grid[1,3]=0.0
 		grid[2,3]=0.0
 		grid[3,3]=1.0
-	
+		Return Self	
 	End Method
 	
 	' copy - create new copy and returns it
 	
-	Method Copy:TMatrix()
+	Method Copy:TMatrix()	
 	
-		Local mat:TMatrix=New TMatrix
-	
-		mat.grid[0,0]=grid[0,0]
-		mat.grid[1,0]=grid[1,0]
-		mat.grid[2,0]=grid[2,0]
-		mat.grid[3,0]=grid[3,0]
-		mat.grid[0,1]=grid[0,1]
-		mat.grid[1,1]=grid[1,1]
-		mat.grid[2,1]=grid[2,1]
-		mat.grid[3,1]=grid[3,1]
-		mat.grid[0,2]=grid[0,2]
-		mat.grid[1,2]=grid[1,2]
-		mat.grid[2,2]=grid[2,2]
-		mat.grid[3,2]=grid[3,2]
-		
-		' do not remove
-		mat.grid[0,3]=grid[0,3]
-		mat.grid[1,3]=grid[1,3]
-		mat.grid[2,3]=grid[2,3]
-		mat.grid[3,3]=grid[3,3]
-		
+		Local mat:TMatrix=New TMatrix		
+		mat.Overwrite Self
 		Return mat
 	
 	End Method
@@ -72,71 +138,9 @@ Type TMatrix
 	' overwrite - overwrites self with matrix passed as parameter
 	
 	Method Overwrite(mat:TMatrix)
-	
-		grid[0,0]=mat.grid[0,0]
-		grid[1,0]=mat.grid[1,0]
-		grid[2,0]=mat.grid[2,0]
-		grid[3,0]=mat.grid[3,0]
-		grid[0,1]=mat.grid[0,1]
-		grid[1,1]=mat.grid[1,1]
-		grid[2,1]=mat.grid[2,1]
-		grid[3,1]=mat.grid[3,1]
-		grid[0,2]=mat.grid[0,2]
-		grid[1,2]=mat.grid[1,2]
-		grid[2,2]=mat.grid[2,2]
-		grid[3,2]=mat.grid[3,2]
-		
-		grid[0,3]=mat.grid[0,3]
-		grid[1,3]=mat.grid[1,3]
-		grid[2,3]=mat.grid[2,3]
-		grid[3,3]=mat.grid[3,3]
-		
+		memcpy_ grid,mat.grid,4*4*4
 	End Method
 	
-	Method Inverse:TMatrix()
-
-		Local mat:TMatrix=New TMatrix
-	
-		Local tx#=0
-		Local ty#=0
-		Local tz#=0
-	
-	  	' The rotational part of the matrix is simply the transpose of the
-	  	' original matrix.
-	  	mat.grid[0,0] = grid[0,0]
-	  	mat.grid[1,0] = grid[0,1]
-	  	mat.grid[2,0] = grid[0,2]
-	
-		mat.grid[0,1] = grid[1,0]
-		mat.grid[1,1] = grid[1,1]
-		mat.grid[2,1] = grid[1,2]
-	
-		mat.grid[0,2] = grid[2,0]
-		mat.grid[1,2] = grid[2,1]
-		mat.grid[2,2] = grid[2,2]
-	
-		' The right column vector of the matrix should always be [ 0 0 0 1 ]
-		' in most cases. . . you don't need this column at all because it'll 
-		' never be used in the program, but since this code is used with GL
-		' and it does consider this column, it is here.
-		mat.grid[0,3] = 0 
-		mat.grid[1,3] = 0
-		mat.grid[2,3] = 0
-		mat.grid[3,3] = 1
-	
-		' The translation components of the original matrix.
-		tx = grid[3,0]
-		ty = grid[3,1]
-		tz = grid[3,2]
-	
-		' Result = -(Tm * Rm) To get the translation part of the inverse
-		mat.grid[3,0] = -( (grid[0,0] * tx) + (grid[0,1] * ty) + (grid[0,2] * tz) )
-		mat.grid[3,1] = -( (grid[1,0] * tx) + (grid[1,1] * ty) + (grid[1,2] * tz) )
-		mat.grid[3,2] = -( (grid[2,0] * tx) + (grid[2,1] * ty) + (grid[2,2] * tz) )
-	
-		Return mat
-
-	End Method
 
 	Method Multiply(mat:TMatrix)
 	
@@ -175,6 +179,85 @@ Type TMatrix
 		'grid[3,3]=m33
 		
 	End Method
+
+	Method FromRot(a#,b#,c#)
+		Local t1#,t2#,t4#,t5#,t6#,t8#,t9#,t12#
+	
+		t1 = Cos(b);
+		t2 = Cos(a);
+		t4 = Sin(c);
+		t5 = Sin(b);
+		t6 = t4*t5;
+		t8 = Cos(c);
+		t9 = Sin(a);
+		t12 =t8*t5;
+		
+		grid[0,0] = t1*t2;
+		grid[0,1] = -t6*t2-t8*t9;
+		grid[0,2] = -t12*t2+t4*t9;
+		grid[0,3]=0
+		grid[1,0] = t1*t9;
+		grid[1,1] = -t6*t9+t8*t2;
+		grid[1,2] = -t12*t9-t4*t2;
+		grid[1,3]=0
+		grid[2,0] = t5;
+		grid[2,1] = t4*t1;
+		grid[2,2] = t8*t1;
+		grid[2,3]=0
+		grid[3,0]=0
+		grid[3,1]=0
+		grid[3,2]=0
+		grid[3,3]=1
+
+	End Method
+	
+	Method Inverse:TMatrix()
+		Local mat:TMatrix=New TMatrix
+		mat.Invert(Self)
+		Return mat
+	End Method
+		
+	Method Invert(src:TMatrix)
+
+		Local tx#=0
+		Local ty#=0
+		Local tz#=0
+	
+	  	' The rotational part of the matrix is simply the transpose of the
+	  	' original matrix.
+	  	grid[0,0] = src.grid[0,0]
+	  	grid[1,0] = src.grid[0,1]
+	  	grid[2,0] = src.grid[0,2]
+	
+		grid[0,1] = src.grid[1,0]
+		grid[1,1] = src.grid[1,1]
+		grid[2,1] = src.grid[1,2]
+	
+		grid[0,2] = src.grid[2,0]
+		grid[1,2] = src.grid[2,1]
+		grid[2,2] = src.grid[2,2]
+	
+		' The right column vector of the matrix should always be [ 0 0 0 1 ]
+		' in most cases. . . you don't need this column at all because it'll 
+		' never be used in the program, but since this code is used with GL
+		' and it does consider this column, it is here.
+		grid[0,3] = 0 
+		grid[1,3] = 0
+		grid[2,3] = 0
+		grid[3,3] = 1
+	
+		' The translation components of the original matrix.
+		tx = src.grid[3,0]
+		ty = src.grid[3,1]
+		tz = src.grid[3,2]
+	
+		' Result = -(Tm * Rm) To get the translation part of the inverse
+		grid[3,0] = -( (src.grid[0,0] * tx) + (src.grid[0,1] * ty) + (src.grid[0,2] * tz) )
+		grid[3,1] = -( (src.grid[1,0] * tx) + (src.grid[1,1] * ty) + (src.grid[1,2] * tz) )
+		grid[3,2] = -( (src.grid[2,0] * tx) + (src.grid[2,1] * ty) + (src.grid[2,2] * tz) )
+	
+	End Method
+
 
 	Method Translate(x#,y#,z#)
 	

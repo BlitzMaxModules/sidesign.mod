@@ -38,56 +38,8 @@ Type TMesh Extends TEntity
 		' new mesh
 		Local mesh:TMesh=New TMesh
 		
-		' copy contents of child list before adding parent
-		For Local ent:TEntity=EachIn child_list
-			ent.CopyEntity(mesh)
-		Next
+		Clone(mesh,parent_ent)
 		
-		' lists
-			
-		' add parent, add to list
-		mesh.AddParent(parent_ent:TEntity)
-		mesh.EntityListAdd(entity_list)
-		
-		' add to collision entity list
-		If collision_type<>0
-			TCollisionPair.ent_lists[collision_type].AddLast(mesh)
-		EndIf
-		
-		' add to pick entity list
-		If pick_mode<>0
-			TPick.ent_list.AddLast(mesh)
-		EndIf
-		
-		' update matrix
-		If mesh.parent<>Null
-			mesh.mat.Overwrite(mesh.parent.mat)
-		Else
-			mesh.mat.LoadIdentity()
-		EndIf
-		
-		' copy entity info
-				
-		mesh.mat.Multiply(mat)
-		
-		mesh.px#=px#
-		mesh.py#=py#
-		mesh.pz#=pz#
-		mesh.sx#=sx#
-		mesh.sy#=sy#
-		mesh.sz#=sz#
-		mesh.rx#=rx#
-		mesh.ry#=ry#
-		mesh.rz#=rz#
-		mesh.qw#=qw#
-		mesh.qx#=qx#
-		mesh.qy#=qy#
-		mesh.qz#=qz#
-		
-		mesh.name$=name$
-		mesh.class$=class$
-		mesh.order=order
-		mesh.hide=False
 		mesh.auto_fade=auto_fade
 		mesh.fade_near#=fade_near
 		mesh.fade_far#=fade_far
@@ -196,12 +148,7 @@ Type TMesh Extends TEntity
 		mesh.EntityListAdd(entity_list)
 
 		' update matrix
-		If mesh.parent<>Null
-			mesh.mat.Overwrite(mesh.parent.mat)
-			mesh.UpdateMat()
-		Else
-			mesh.UpdateMat(True)
-		EndIf
+		mesh.UpdateMat()
 	
 		Return mesh
 
@@ -220,12 +167,7 @@ Type TMesh Extends TEntity
 		mesh.EntityListAdd(entity_list)
 
 		' update matrix
-		If mesh.parent<>Null
-			mesh.mat.Overwrite(mesh.parent.mat)
-			mesh.UpdateMat()
-		Else
-			mesh.UpdateMat(True)
-		EndIf
+		mesh.UpdateMat()
 		
 		Return mesh
 	

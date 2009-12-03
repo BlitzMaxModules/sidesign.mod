@@ -155,8 +155,16 @@ Type TGlobal
 		EndIf
 	
 	End Function
+
+	Function TransformWorld()
+		TEntity.entity_root.Transform()
+	End Function
 			
 	Function UpdateWorld(anim_speed#=1.0)
+
+		' flush transformations
+		
+		TransformWorld()
 		
 		' collision
 		

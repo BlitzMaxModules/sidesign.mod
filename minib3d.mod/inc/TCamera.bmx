@@ -42,60 +42,11 @@ Type TCamera Extends TEntity
 	End Method
 
 	Method CopyEntity:TCamera(parent_ent:TEntity=Null)
-
+	
 		' new cam
 		Local cam:TCamera=New TCamera
 		
-		' copy contents of child list before adding parent
-		For Local ent:TEntity=EachIn child_list
-			ent.CopyEntity(cam)
-		Next
-		
-		' lists
-		
-		' add parent, add to list
-		cam.AddParent(parent_ent:TEntity)
-		cam.EntityListAdd(entity_list)
-		
-		' add to collision entity list
-		If collision_type<>0
-			TCollisionPair.ent_lists[collision_type].AddLast(cam)
-		EndIf
-		
-		' add to pick entity list
-		If pick_mode<>0
-			TPick.ent_list.AddLast(cam)
-		EndIf
-		
-		' update matrix
-		If cam.parent<>Null
-			cam.mat.Overwrite(cam.parent.mat)
-		Else
-			cam.mat.LoadIdentity()
-		EndIf
-		
-		' copy entity info
-		
-		cam.mat.Multiply(mat)
-		
-		cam.px#=px#
-		cam.py#=py#
-		cam.pz#=pz#
-		cam.sx#=sx#
-		cam.sy#=sy#
-		cam.sz#=sz#
-		cam.rx#=rx#
-		cam.ry#=ry#
-		cam.rz#=rz#
-		cam.qw#=qw#
-		cam.qx#=qx#
-		cam.qy#=qy#
-		cam.qz#=qz#
-
-		cam.name$=name$
-		cam.class$=class$
-		cam.order=order
-		cam.hide=False
+		Clone(cam,parent_ent)
 		
 		cam.cull_radius#=cull_radius#
 		cam.radius_x#=radius_x#
@@ -156,12 +107,7 @@ Type TCamera Extends TEntity
 		cam.EntityListAdd(cam_list) ' add to cam list
 		
 		' update matrix
-		If cam.parent<>Null
-			cam.mat.Overwrite(cam.parent.mat)
-			cam.UpdateMat()
-		Else
-			cam.UpdateMat(True)
-		EndIf
+		cam.UpdateMat()
 
 		Return cam
 
@@ -563,7 +509,7 @@ Type TCamera Extends TEntity
 		
 		accPerspective(ATan((1.0/(zoom#*ratio#)))*2.0,ratio#,range_near#,range_far#,jx#,jy#,0.0,0.0,1.0)
 
-		Local new_mat:TMatrix=mat.Inverse()	
+		Local new_mat:TMatrix=mat.Inverse()
 		glLoadMatrixf(new_mat.grid)
 
 		' Get projection/model/viewport info - for use with CameraProject

@@ -21,57 +21,8 @@ Type TPivot Extends TEntity
 		' new piv
 		Local piv:TPivot=New TPivot
 		
-		' copy contents of child list before adding parent
-		For Local ent:TEntity=EachIn child_list
-			ent.CopyEntity(piv)
-		Next
+		Clone(piv,parent_ent)
 		
-		' lists
-		
-		' add parent, add to list
-		piv.AddParent(parent_ent:TEntity)
-		piv.EntityListAdd(entity_list)
-		
-		' add to collision entity list
-		If collision_type<>0
-			TCollisionPair.ent_lists[collision_type].AddLast(piv)
-		EndIf
-		
-		' add to pick entity list
-		If pick_mode<>0
-			TPick.ent_list.AddLast(piv)
-		EndIf
-		
-		' update matrix
-		If piv.parent<>Null
-			piv.mat.Overwrite(piv.parent.mat)
-		Else
-			piv.mat.LoadIdentity()
-		EndIf
-		
-		' copy entity info
-				
-		piv.mat.Multiply(mat)
-		
-		piv.px#=px#
-		piv.py#=py#
-		piv.pz#=pz#
-		piv.sx#=sx#
-		piv.sy#=sy#
-		piv.sz#=sz#
-		piv.rx#=rx#
-		piv.ry#=ry#
-		piv.rz#=rz#
-		piv.qw#=qw#
-		piv.qx#=qx#
-		piv.qy#=qy#
-		piv.qz#=qz#
-
-		piv.name$=name$
-		piv.class$=class$
-		piv.order=order
-		piv.hide=False
-
 		piv.cull_radius#=cull_radius#
 		piv.radius_x#=radius_x#
 		piv.radius_y#=radius_y#
@@ -103,12 +54,7 @@ Type TPivot Extends TEntity
 		piv.EntityListAdd(entity_list)
 
 		' update matrix
-		If piv.parent<>Null
-			piv.mat.Overwrite(piv.parent.mat)
-			piv.UpdateMat()
-		Else
-			piv.UpdateMat(True)
-		EndIf
+		piv.UpdateMat()
 
 		Return piv
 

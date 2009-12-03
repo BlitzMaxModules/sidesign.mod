@@ -1,3 +1,4 @@
+
 ' Procedural Interfaces
 
 Rem
@@ -479,7 +480,7 @@ Rem
 bbdoc: <a href="http://www.blitzbasic.com/b3ddocs/command.php?name=CreateTexture">Online Help</a>
 End Rem
 Function CreateTexture:TTexture(width,height,flags=1,frames=1)
-	Return TTexture.CreateTexture(width,height,flags,frames)
+	Return TTexture.CreateTexture(width,height,flags)',frames)
 End Function
 
 Rem
@@ -584,7 +585,7 @@ Rem
 bbdoc: <a href="http://www.blitzbasic.com/b3ddocs/command.php?name=EntityParent">Online Help</a>
 End Rem
 Function EntityParent(ent:TEntity,parent_ent:TEntity,glob=True)
-	ent.EntityParent(parent_ent,glob)
+	ent.AddParent(parent_ent,glob)
 End Function
 
 Rem
@@ -1284,14 +1285,14 @@ Rem
 bbdoc: <a href="http://www.blitzbasic.com/b3ddocs/command.php?name=VectorPitch">Online Help</a>
 End Rem	
 Function VectorPitch#(vx#,vy#,vz#)
-	Return TVector.VectorPitch#(vx#,vy#,vz#)
+	Return TUtility.VectorPitch#(vx#,vy#,vz#)
 End Function
 
 Rem
 bbdoc: <a href="http://www.blitzbasic.com/b3ddocs/command.php?name=VectorYaw">Online Help</a>
 End Rem	
 Function VectorYaw#(vx#,vy#,vz#)
-	Return TVector.VectorYaw#(vx#,vy#,vz#)
+	Return TUtility.VectorYaw#(vx#,vy#,vz#)
 End Function
 
 Rem

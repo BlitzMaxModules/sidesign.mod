@@ -1,7 +1,7 @@
 Type TCollisionPair
 
 	Global list:TList=New TList
-	Global ent_lists:TList[MAX_TYPES]
+	Global ent_lists:TList[1024]'simon!!!MAX_TYPES]
 
 	Field src_type
 	Field des_type

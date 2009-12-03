@@ -35,56 +35,7 @@ Type TLight Extends TEntity
 		' new light 
 		Local light:TLight=New TLight
 		
-		' copy contents of child list before adding parent
-		For Local ent:TEntity=EachIn child_list
-			ent.CopyEntity(light)
-		Next
-		
-		' lists
-		
-		' add parent, add to list
-		light.AddParent(parent_ent:TEntity)
-		light.EntityListAdd(entity_list)
-		
-		' add to collision entity list
-		If collision_type<>0
-			TCollisionPair.ent_lists[collision_type].AddLast(light)
-		EndIf
-		
-		' add to pick entity list
-		If pick_mode<>0
-			TPick.ent_list.AddLast(light)
-		EndIf
-		
-		' update matrix
-		If light.parent<>Null
-			light.mat.Overwrite(light.parent.mat)
-		Else
-			light.mat.LoadIdentity()
-		EndIf
-		
-		' copy entity info
-				
-		light.mat.Multiply(mat)
-		
-		light.px#=px#
-		light.py#=py#
-		light.pz#=pz#
-		light.sx#=sx#
-		light.sy#=sy#
-		light.sz#=sz#
-		light.rx#=rx#
-		light.ry#=ry#
-		light.rz#=rz#
-		light.qw#=qw#
-		light.qx#=qx#
-		light.qy#=qy#
-		light.qz#=qz#
-		
-		light.name$=name$
-		light.class$=class$
-		light.order=order
-		light.hide=False
+		Clone(light,parent_ent)
 
 		light.cull_radius#=cull_radius#
 		light.radius_x#=radius_x#
@@ -158,12 +109,7 @@ Type TLight Extends TEntity
 		light.EntityListAdd(entity_list)
 
 		' update matrix
-		If light.parent<>Null
-			light.mat.Overwrite(light.parent.mat)
-			light.UpdateMat()
-		Else
-			light.UpdateMat(True)
-		EndIf
+		light.UpdateMat()
 
 		Return light
 

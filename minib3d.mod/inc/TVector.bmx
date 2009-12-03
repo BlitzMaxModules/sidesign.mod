@@ -1,3 +1,4 @@
+Rem
 Type TVector
 
 	Field x#,y#,z#
@@ -169,3 +170,5 @@ Type TVector
 	End Function
 
 End Type
+
+endrem

@@ -26,56 +26,7 @@ Type TSprite Extends TMesh
 		' new sprite
 		Local sprite:TSprite=New TSprite
 		
-		' copy contents of child list before adding parent
-		For Local ent:TEntity=EachIn child_list
-			ent.CopyEntity(sprite)
-		Next
-		
-		' add parent, add to list
-		sprite.AddParent(parent_ent:TEntity)
-		sprite.EntityListAdd(entity_list)
-				
-		' lists
-		
-		' add to collision entity list
-		If collision_type<>0
-			TCollisionPair.ent_lists[collision_type].AddLast(sprite)
-		EndIf
-		
-		' add to pick entity list
-		If pick_mode<>0
-			ListAddLast(TPick.ent_list,sprite)
-		EndIf
-		
-		' update matrix
-		If sprite.parent<>Null
-			sprite.mat.Overwrite(sprite.parent.mat)
-		Else
-			sprite.mat.LoadIdentity()
-		EndIf
-		
-		' copy entity info
-			
-		sprite.mat.Multiply(mat)
-		
-		sprite.px#=px#
-		sprite.py#=py#
-		sprite.pz#=pz#
-		sprite.sx#=sx#
-		sprite.sy#=sy#
-		sprite.sz#=sz#
-		sprite.rx#=rx#
-		sprite.ry#=ry#
-		sprite.rz#=rz#
-		sprite.qw#=qw#
-		sprite.qx#=qx#
-		sprite.qy#=qy#
-		sprite.qz#=qz#
-
-		sprite.name$=name$
-		sprite.class$=class$
-		sprite.order=order
-		sprite.hide=False
+		Clone(sprite,parent_ent)
 		sprite.auto_fade=auto_fade
 		sprite.fade_near#=fade_near
 		sprite.fade_far#=fade_far
@@ -124,12 +75,7 @@ Type TSprite Extends TMesh
 		sprite.EntityListAdd(entity_list)
 
 		' update matrix
-		If sprite.parent<>Null
-			sprite.mat.Overwrite(sprite.parent.mat)
-			sprite.UpdateMat()
-		Else
-			sprite.UpdateMat(True)
-		EndIf
+		sprite.UpdateMat()
 		
 		Local surf:TSurface=sprite.CreateSurface()
 		surf.AddVertex(-1,-1,0, 0, 1)

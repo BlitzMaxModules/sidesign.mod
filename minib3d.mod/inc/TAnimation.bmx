@@ -180,13 +180,15 @@ Type TAnimation
 				Local yaw#=0
 				Local roll#=0
 				TQuaternion.QuatToEuler(w3,x3,y3,z3,pitch#,yaw#,roll#)
+Rem
 				TBone(bent).rx#=-pitch#
 				TBone(bent).ry#=yaw#
 				TBone(bent).rz#=roll#
-				
+
 				TBone(bent).px#=px3
 				TBone(bent).py#=py3
 				TBone(bent).pz#=pz3			
+EndRem				
 				
 				' set mat2 to equal mat
 				TBone(bent).mat2.Overwrite(TBone(bent).mat)
@@ -211,9 +213,11 @@ Type TAnimation
 				' A tform mat is needed to transform vertices, and is basically the bone mat multiplied by the inverse reference pose mat
 				TBone(bent).tform_mat.Overwrite(TBone(bent).mat2)
 				TBone(bent).tform_mat.Multiply(TBone(bent).inv_mat)
+Assert 0'skid!				
+'				TEntity.
 
 				' update bone children
-				If TBone(bent).child_list.IsEmpty()<>True Then TEntity.UpdateChildren(bent)
+'				If TBone(bent).child_list.IsEmpty()<>True Then TEntity.UpdateChildren(bent)
 								
 			Next
 								
@@ -368,13 +372,14 @@ Type TAnimation
 				Local yaw#=0
 				Local roll#=0
 				TQuaternion.QuatToEuler(w3,x3,y3,z3,pitch#,yaw#,roll#)
+Rem skid				
 				TBone(bent).rx#=-pitch#
 				TBone(bent).ry#=yaw#
 				TBone(bent).rz#=roll#
-				
 				TBone(bent).px#=px3
 				TBone(bent).py#=py3
 				TBone(bent).pz#=pz3			
+EndRem				
 				
 				' set mat2 to equal mat
 				TBone(bent).mat2.Overwrite(TBone(bent).mat)
@@ -401,7 +406,7 @@ Type TAnimation
 				TBone(bent).tform_mat.Multiply(TBone(bent).inv_mat)
 
 				' update bone children
-				If TBone(bent).child_list.IsEmpty()<>True Then TEntity.UpdateChildren(bent)
+'				If TBone(bent).child_list.IsEmpty()<>True Then TEntity.UpdateChildren(bent)
 		
 			Next
 								
