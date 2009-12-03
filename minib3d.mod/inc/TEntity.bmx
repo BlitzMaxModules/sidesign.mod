@@ -29,7 +29,8 @@ Type TEntity
 	Field mat:TMatrix=New TMatrix
 
 	Field cycle:Int
-	Field dirty:Int 
+	Field dirty:Int	
+	Field needclean:Int 
 
 	Field global_mat:TMatrix=New TMatrix
 	Field global_inv_mat:TMatrix=New TMatrix
@@ -77,9 +78,14 @@ Type TEntity
 ' private helpers
 
 	Method UpdateMat()
-		Local ent:TEntity
+		Local p:TEntity
 		Assert Self<>entity_root
 		dirty=True
+		p=Self
+		While p
+			p.needclean=True
+			p=p.parent
+		Wend		
 	End Method
 	
 	Method Transform()
@@ -94,11 +100,14 @@ Type TEntity
 				ent.global_mat.multiply(global_mat)			
 				ent.dirty=True
 			Next		
-			dirty=False
 		EndIf
-		For ent= EachIn child_list
-			ent.Transform
-		Next
+		If dirty Or needclean
+			For ent= EachIn child_list
+				ent.Transform
+			Next
+			dirty=False
+			needclean=False
+		EndIf
 	End Method
 
 	Method AddParent(parent_ent:TEntity,glob=True)
@@ -830,6 +839,8 @@ EndRem
 	
 	Function TFormPoint(x#,y#,z#,src_ent:TEntity,dest_ent:TEntity)
 	
+		entity_root.Transform()
+	
 		If src_ent And src_ent.parent
 			src_ent.parent.global_mat.Transform(x,y,z)
 		EndIf
@@ -846,6 +857,7 @@ EndRem
 
 	Function TFormVector(x#,y#,z#,src_ent:TEntity,dest_ent:TEntity)
 	
+		entity_root.Transform()
 	
 		If src_ent.parent
 			src_ent.parent.global_mat.TransformVector(x,y,z)
@@ -862,6 +874,8 @@ EndRem
 	End Function
 
 	Function TFormNormal(x#,y#,z#,src_ent:TEntity,dest_ent:TEntity)
+
+		entity_root.Transform()
 
 		TEntity.TFormVector(x#,y#,z#,src_ent,dest_ent)
 		

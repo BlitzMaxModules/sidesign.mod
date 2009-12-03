@@ -4,12 +4,10 @@ Type TTexture
 
 	Field file$,flags,blend=2,coords,u_scale#=1.0,v_scale#=1.0,u_pos#,v_pos#,angle#
 	Field file_abs$,width,height ' returned by Name/Width/Height commands
-
-	Field pix:TPixmap
-	Field gltex[8]
-
+	Field pixmap:TPixmap
+	Field gltex[1]
 	Field cube_pixmap:TPixmap[7]
-'	Field no_frames=1
+	Field no_frames=1
 	Field no_mipmaps
 	Field cube_face=0,cube_mode=1
 
@@ -32,102 +30,76 @@ Type TTexture
 	Method FreeTexture()
 	
 		ListRemove(tex_list,Self)
+		pixmap=Null
 		cube_pixmap=Null
-		pix=Null
-		gltex[0]=0
+		gltex=Null
 	
 	End Method
 	
-	Method Refresh()
-		Local width=pix.width
-		Local height=pix.height
+	Function CreateTexture:TTexture(width,height,flags=1,frames=1,tex:TTexture=Null)
 	
-		Local name
-
-		glGenTextures 1,Varptr name
-		glBindtexture GL_TEXTURE_2D,name
-	
-		Local mipmap
-		If flags&8 Then mipmap=True
-		Local mip_level=0
-		Local pixmap:TPixmap		
-		pixmap=pix
-		Repeat
-			glPixelStorei GL_UNPACK_ROW_LENGTH,pixmap.pitch/BytesPerPixel[pixmap.format]
-			glTexImage2D GL_TEXTURE_2D,mip_level,GL_RGBA8,width,height,0,GL_RGBA,GL_UNSIGNED_BYTE,pixmap.pixels
-			If Not mipmap Then Exit
-			If width=1 And height=1 Exit
-			If width>1 width:/2
-			If height>1 height:/2	
-			pixmap=ResizePixmap(pixmap,width,height)
-			mip_level:+1
-		Forever
-
-		no_mipmaps=mip_level	
-		gltex[0]=name
-	End Method
-	
-	Function CreateTexture:TTexture(width,height,flags=1)	',frames=1,tex:TTexture=Null)
-	
-		Local tex:TTexture
-
-		Local frames=1
-			
-		Local pixmap:TPixmap
+		If flags&128 Then Return CreateCubeMapTexture(width,height,flags,tex)
 		
-		If flags&128 Then Return CreateCubeMapTexture(width,height,flags)
+		If tex=Null Then tex:TTexture=New TTexture ; ListAddLast(tex_list,tex)
 		
-
-		pixmap=CreatePixmap(width*frames,height,PF_RGBA8888)
-		pixmap=AdjustPixmap(pixmap)		
-		
-'		If tex=Null Then tex:TTexture=New TTexture ; ListAddLast(tex_list,tex)
-
-		tex=New TTexture		
-		tex.pix=pixmap
-		
+		tex.pixmap=CreatePixmap(width*frames,height,PF_RGBA8888)
 
 		' ---
 		
 		tex.flags=flags
-'		tex.gltex=tex.gltex[..tex.no_frames]
+		'tex.FilterFlags() ' not needed in CreateTexture
+				
+		tex.no_frames=frames
+		tex.gltex=tex.gltex[..tex.no_frames]
 
-
-		tex.refresh
-
-
-		Return tex
-
-	End Function
-	
-	
-		'tex.FilterFlags() ' not needed in CreateTexture				
-'		tex.no_frames=frames
-Rem
 		' ---
 		
 		' pixmap -> tex
 			
 		Local x=0
 	
-		Local pixmap2:TPixmap
+		Local pixmap:TPixmap
 	
 		For Local i=0 To tex.no_frames-1
 	
-			pixmap2=tex.pix.Window(x*width,0,width,height)
+			pixmap=tex.pixmap.Window(x*width,0,width,height)
 			x=x+1
 		
 			' ---
 		
-			pixmap2=AdjustPixmap(pixmap2)
-			tex.pixmap[i]=pixmap2
+			pixmap=AdjustPixmap(pixmap)
 			tex.width=pixmap.width
 			tex.height=pixmap.height
+			Local width=pixmap.width
+			Local height=pixmap.height
 
+			Local name
+			glGenTextures 1,Varptr name
+			glBindtexture GL_TEXTURE_2D,name
+
+			Local mipmap
+			If tex.flags&8 Then mipmap=True
+			Local mip_level=0
+			Repeat
+				glPixelStorei GL_UNPACK_ROW_LENGTH,pixmap.pitch/BytesPerPixel[pixmap.format]
+				glTexImage2D GL_TEXTURE_2D,mip_level,GL_RGBA8,width,height,0,GL_RGBA,GL_UNSIGNED_BYTE,pixmap.pixels
+				If Not mipmap Then Exit
+				If width=1 And height=1 Exit
+				If width>1 width:/2
+				If height>1 height:/2
+
+				pixmap=ResizePixmap(pixmap,width,height)
+				mip_level:+1
+			Forever
+			tex.no_mipmaps=mip_level
+
+			tex.gltex[i]=name
 	
 		Next
 		
-EndRem
+		Return tex
+
+	End Function
 
 	Function LoadTexture:TTexture(file$,flags=1,tex:TTexture=Null)
 	
@@ -162,47 +134,46 @@ EndRem
 		EndIf
 
 		' load pixmap
-		tex.pix=LoadPixmap(file$)
+		tex.pixmap=LoadPixmap(file$)
 		
 		' check to see if pixmap contain alpha layer, set alpha_present to true if so (do this before converting)
 		Local alpha_present=False
-		If tex.pix.format=PF_RGBA8888 Or tex.pix.format=PF_BGRA8888 Or tex.pix.format=PF_A8 Then alpha_present=True
+		If tex.pixmap.format=PF_RGBA8888 Or tex.pixmap.format=PF_BGRA8888 Or tex.pixmap.format=PF_A8 Then alpha_present=True
 
 		' convert pixmap to appropriate format
-		If tex.pix.format<>PF_RGBA8888
-			tex.pix=tex.pix.Convert(PF_RGBA8888)
+		If tex.pixmap.format<>PF_RGBA8888
+			tex.pixmap=tex.pixmap.Convert(PF_RGBA8888)
 		EndIf
 		
 		' if alpha flag is true and pixmap doesn't contain alpha info, apply alpha based on color values
 		If tex.flags&2 And alpha_present=False
-			tex.pix=ApplyAlpha(tex.pix)
+			tex.pixmap=ApplyAlpha(tex.pixmap)
 		EndIf		
 
 		' if mask flag is true, mask pixmap
 		If tex.flags&4
-			tex.pix=MaskPixmap(tex.pix,0,0,0)
+			tex.pixmap=MaskPixmap(tex.pixmap,0,0,0)
 		EndIf
 		
 		' ---
-Rem
 		
 		' if tex not anim tex, get frame width and height
 		If frame_width=0 And frame_height=0
-			frame_width=tex.pix.width
-			frame_height=tex.pix.height
+			frame_width=tex.pixmap.width
+			frame_height=tex.pixmap.height
 		EndIf
 
 		' ---
 		
-'		tex.no_frames=frame_count
-'		tex.gltex=tex.gltex[..tex.no_frames]
+		tex.no_frames=frame_count
+		tex.gltex=tex.gltex[..tex.no_frames]
 
 		' ---
 		
 		' pixmap -> tex
 
-		Local xframes=tex.pix.width/frame_width
-		Local yframes=tex.pix.height/frame_height
+		Local xframes=tex.pixmap.width/frame_width
+		Local yframes=tex.pixmap.height/frame_height
 			
 		Local startx=first_frame Mod xframes
 		Local starty=(first_frame/yframes) Mod yframes
@@ -215,7 +186,7 @@ Rem
 		For Local i=0 To tex.no_frames-1
 	
 			' get static pixmap window. when resize pixmap is called new pixmap will be returned.
-			pixmap=tex.pix.Window(x*frame_width,y*frame_height,frame_width,frame_height)
+			pixmap=tex.pixmap.Window(x*frame_width,y*frame_height,frame_width,frame_height)
 			x=x+1
 			If x>=xframes
 				x=0
@@ -253,7 +224,7 @@ Rem
 			tex.gltex[i]=name
 	
 		Next
-EndRem				
+				
 		Return tex
 		
 	End Function
@@ -262,14 +233,14 @@ EndRem
 		
 		If tex=Null Then tex:TTexture=New TTexture ; ListAddLast(tex_list,tex)
 		
-		tex.pix=CreatePixmap(width*6,height,PF_RGBA8888)
+		tex.pixmap=CreatePixmap(width*6,height,PF_RGBA8888)
 		
 		' ---
 		
 		tex.flags=flags
 		'tex.FilterFlags() ' not needed in CreateCubeMapTexture
 				
-		'tex.no_frames=1'frame_count
+		tex.no_frames=1'frame_count
 		'tex.gltex=tex.gltex[..tex.no_frames]
 
 		' ---
@@ -284,7 +255,7 @@ EndRem
 	
 		For Local i=0 To 5
 		
-			pixmap=tex.pix.Window(width*i,0,width,height)
+			pixmap=tex.pixmap.Window(width*i,0,width,height)
 
 			' ---
 		
@@ -350,30 +321,30 @@ EndRem
 		EndIf
 
 		' load pixmap
-		tex.pix=LoadPixmap(file$)
+		tex.pixmap=LoadPixmap(file$)
 		
 		' check to see if pixmap contain alpha layer, set alpha_present to true if so (do this before converting)
 		Local alpha_present=False
-		If tex.pix.format=PF_RGBA8888 Or tex.pix.format=PF_BGRA8888 Or tex.pix.format=PF_A8 Then alpha_present=True
+		If tex.pixmap.format=PF_RGBA8888 Or tex.pixmap.format=PF_BGRA8888 Or tex.pixmap.format=PF_A8 Then alpha_present=True
 
 		' convert pixmap to appropriate format
-		If tex.pix.format<>PF_RGBA8888
-			tex.pix=tex.pix.Convert(PF_RGBA8888)
+		If tex.pixmap.format<>PF_RGBA8888
+			tex.pixmap=tex.pixmap.Convert(PF_RGBA8888)
 		EndIf
 		
 		' if alpha flag is true and pixmap doesn't contain alpha info, apply alpha based on color values
 		If tex.flags&2 And alpha_present=False
-			tex.pix=ApplyAlpha(tex.pix)
+			tex.pixmap=ApplyAlpha(tex.pixmap)
 		EndIf		
 
 		' if mask flag is true, mask pixmap
 		If tex.flags&4
-			tex.pix=MaskPixmap(tex.pix,0,0,0)
+			tex.pixmap=MaskPixmap(tex.pixmap,0,0,0)
 		EndIf
 		
 		' ---
 						
-		'tex.no_frames=1'frame_count
+		tex.no_frames=1'frame_count
 		'tex.gltex=tex.gltex[..tex.no_frames]
 		
 		' ---
@@ -388,7 +359,7 @@ EndRem
 	
 		For Local i=0 To 5
 		
-			pixmap=tex.pix.Window((tex.pix.width/6)*i,0,tex.pix.width/6,tex.pix.height)
+			pixmap=tex.pixmap.Window((tex.pixmap.width/6)*i,0,tex.pixmap.width/6,tex.pixmap.height)
 
 			' ---
 		
@@ -689,3 +660,4 @@ Type TTextureFilter
 	Field flags
 	
 End Type
+
