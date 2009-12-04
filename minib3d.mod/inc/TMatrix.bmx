@@ -147,7 +147,7 @@ EndRem
 	
 
 	Method Multiply(mat:TMatrix)
-	
+
 		Local m00# = grid#[0,0]*mat.grid#[0,0] + grid#[1,0]*mat.grid#[0,1] + grid#[2,0]*mat.grid#[0,2] + grid#[3,0]*mat.grid#[0,3]
 		Local m01# = grid#[0,1]*mat.grid#[0,0] + grid#[1,1]*mat.grid#[0,1] + grid#[2,1]*mat.grid#[0,2] + grid#[3,1]*mat.grid#[0,3]
 		Local m02# = grid#[0,2]*mat.grid#[0,0] + grid#[1,2]*mat.grid#[0,1] + grid#[2,2]*mat.grid#[0,2] + grid#[3,2]*mat.grid#[0,3]
@@ -184,45 +184,86 @@ EndRem
 		
 	End Method
 
-	Method Multiply2(mat:TMatrix)
-		Local sgrid#[,]
-		
-		sgrid=mat.grid	
-		Local m00# = sgrid#[0,0]*grid#[0,0] + sgrid#[1,0]*grid#[0,1] + sgrid#[2,0]*grid#[0,2] + sgrid#[3,0]*grid#[0,3]
-		Local m01# = sgrid#[0,1]*grid#[0,0] + sgrid#[1,1]*grid#[0,1] + sgrid#[2,1]*grid#[0,2] + sgrid#[3,1]*grid#[0,3]
-		Local m02# = sgrid#[0,2]*grid#[0,0] + sgrid#[1,2]*grid#[0,1] + sgrid#[2,2]*grid#[0,2] + sgrid#[3,2]*grid#[0,3]
-		Local m03# = sgrid#[0,3]*grid#[0,0] + sgrid#[1,3]*grid#[0,1] + sgrid#[2,3]*grid#[0,2] + sgrid#[3,3]*grid#[0,3]
-		Local m10# = sgrid#[0,0]*grid#[1,0] + sgrid#[1,0]*grid#[1,1] + sgrid#[2,0]*grid#[1,2] + sgrid#[3,0]*grid#[1,3]
-		Local m11# = sgrid#[0,1]*grid#[1,0] + sgrid#[1,1]*grid#[1,1] + sgrid#[2,1]*grid#[1,2] + sgrid#[3,1]*grid#[1,3]
-		Local m12# = sgrid#[0,2]*grid#[1,0] + sgrid#[1,2]*grid#[1,1] + sgrid#[2,2]*grid#[1,2] + sgrid#[3,2]*grid#[1,3]
-		Local m13# = sgrid#[0,3]*grid#[1,0] + sgrid#[1,3]*grid#[1,1] + sgrid#[2,3]*grid#[1,2] + sgrid#[3,3]*grid#[1,3]
-		Local m20# = sgrid#[0,0]*grid#[2,0] + sgrid#[1,0]*grid#[2,1] + sgrid#[2,0]*grid#[2,2] + sgrid#[3,0]*grid#[2,3]
-		Local m21# = sgrid#[0,1]*grid#[2,0] + sgrid#[1,1]*grid#[2,1] + sgrid#[2,1]*grid#[2,2] + sgrid#[3,1]*grid#[2,3]
-		Local m22# = sgrid#[0,2]*grid#[2,0] + sgrid#[1,2]*grid#[2,1] + sgrid#[2,2]*grid#[2,2] + sgrid#[3,2]*grid#[2,3]
-		Local m23# = sgrid#[0,3]*grid#[2,0] + sgrid#[1,3]*grid#[2,1] + sgrid#[2,3]*grid#[2,2] + sgrid#[3,3]*grid#[2,3]
-		Local m30# = sgrid#[0,0]*grid#[3,0] + sgrid#[1,0]*grid#[3,1] + sgrid#[2,0]*grid#[3,2] + sgrid#[3,0]*grid#[3,3]
-		Local m31# = sgrid#[0,1]*grid#[3,0] + sgrid#[1,1]*grid#[3,1] + sgrid#[2,1]*grid#[3,2] + sgrid#[3,1]*grid#[3,3]
-		Local m32# = sgrid#[0,2]*grid#[3,0] + sgrid#[1,2]*grid#[3,1] + sgrid#[2,2]*grid#[3,2] + sgrid#[3,2]*grid#[3,3]
-		Local m33# = sgrid#[0,3]*grid#[3,0] + sgrid#[1,3]*grid#[3,1] + sgrid#[2,3]*grid#[3,2] + sgrid#[3,3]*grid#[3,3]
 
+' apply mat transform to self
+' scale is independent
+' px->mat[3,0] py->mat[3,1]  pz->mat[3,2]
+
+	Method Local2Global(mat:TMatrix,m:TMatrix)
+		Local sgrid#[,]
+
+		sgrid=mat.grid	
 	
-		grid[0,0]=m00
-		grid[0,1]=m01
-		grid[0,2]=m02
-		grid[0,3]=m03
-		grid[1,0]=m10
-		grid[1,1]=m11
-		grid[1,2]=m12
-		grid[1,3]=m13
-		grid[2,0]=m20
-		grid[2,1]=m21
-		grid[2,2]=m22
-		grid[2,3]=m23
-		grid[3,0]=m30
-		grid[3,1]=m31
-		grid[3,2]=m32
-		grid[3,3]=m33
+		Local m00# = sgrid#[0,0]*grid#[0,0] + sgrid#[1,0]*grid#[0,1] + sgrid#[2,0]*grid#[0,2] 
+		Local m01# = sgrid#[0,1]*grid#[0,0] + sgrid#[1,1]*grid#[0,1] + sgrid#[2,1]*grid#[0,2] 
+		Local m02# = sgrid#[0,2]*grid#[0,0] + sgrid#[1,2]*grid#[0,1] + sgrid#[2,2]*grid#[0,2] 
+		Local m03# = 0
+
+		Local m10# = sgrid#[0,0]*grid#[1,0] + sgrid#[1,0]*grid#[1,1] + sgrid#[2,0]*grid#[1,2] 
+		Local m11# = sgrid#[0,1]*grid#[1,0] + sgrid#[1,1]*grid#[1,1] + sgrid#[2,1]*grid#[1,2] 
+		Local m12# = sgrid#[0,2]*grid#[1,0] + sgrid#[1,2]*grid#[1,1] + sgrid#[2,2]*grid#[1,2] 
+		Local m13# = 0
+
+		Local m20# = sgrid#[0,0]*grid#[2,0] + sgrid#[1,0]*grid#[2,1] + sgrid#[2,0]*grid#[2,2] 
+		Local m21# = sgrid#[0,1]*grid#[2,0] + sgrid#[1,1]*grid#[2,1] + sgrid#[2,1]*grid#[2,2] 
+		Local m22# = sgrid#[0,2]*grid#[2,0] + sgrid#[1,2]*grid#[2,1] + sgrid#[2,2]*grid#[2,2] 
+		Local m23# = 0
+
+		Local m30# = sgrid#[0,0]*grid#[3,0] + sgrid#[1,0]*grid#[3,1] + sgrid#[2,0]*grid#[3,2] 
+		Local m31# = sgrid#[0,1]*grid#[3,0] + sgrid#[1,1]*grid#[3,1] + sgrid#[2,1]*grid#[3,2] 
+		Local m32# = sgrid#[0,2]*grid#[3,0] + sgrid#[1,2]*grid#[3,1] + sgrid#[2,2]*grid#[3,2] 
+		Local m33# = 1
+
+		Local sx# = grid#[0,3]
+		Local sy# = grid#[1,3]
+		Local sz# = grid#[2,3]
+	
+		m.grid[0,0]=m00*sx
+		m.grid[0,1]=m01*sx
+		m.grid[0,2]=m02*sx
+		m.grid[0,3]=m03
 		
+		m.grid[1,0]=m10*sy
+		m.grid[1,1]=m11*sy
+		m.grid[1,2]=m12*sy
+		m.grid[1,3]=m13
+		
+		m.grid[2,0]=m20*sz
+		m.grid[2,1]=m21*sz
+		m.grid[2,2]=m22*sz
+		m.grid[2,3]=m23
+		
+		m.grid[3,0]=m30
+		m.grid[3,1]=m31
+		m.grid[3,2]=m32
+		m.grid[3,3]=m33
+		
+	End Method
+
+	Method JustRot(a#,b#,c#)
+		Local t1#,t2#,t4#,t5#,t6#,t8#,t9#,t12#
+	
+		t1 = Cos(b);
+		t2 = Cos(a);
+		t4 = Sin(c);
+		t5 = Sin(b);
+		t6 = t4*t5;
+		t8 = Cos(c);
+		t9 = Sin(a);
+		t12 =t8*t5;
+		
+		grid[0,0] = t1*t2;
+		grid[0,1] = -t6*t2-t8*t9;
+		grid[0,2] = -t12*t2+t4*t9;
+
+		grid[1,0] = t1*t9;
+		grid[1,1] = -t6*t9+t8*t2;
+		grid[1,2] = -t12*t9-t4*t2;
+
+		grid[2,0] = t5;
+		grid[2,1] = t4*t1;
+		grid[2,2] = t8*t1;
+
 	End Method
 
 	Method FromRot(a#,b#,c#)

@@ -10,6 +10,7 @@ cube=LoadSprite("b-max.png")
 
 cube2=LoadSprite("b-max.png",0,cube)
 moveentity cube2,0,2,0
+scalesprite cube2,.5,.5,.5
 
 cam=createcamera()
 moveentity cam,0,0,-5
@@ -21,7 +22,7 @@ Local rot
 
 While Not KeyHit(KEY_ESCAPE)
 	rotatesprite cube,rot
-	turnentity cube,1,0,0
+	turnentity cube,-1,0,0
 	rot=rot+1
 	updateworld
 	renderworld

@@ -8,6 +8,8 @@
 
 ' entity_root provides single dummy world pivot for transformation hierachy
 
+' mat removed for optimal entity that extends matrix 
+
 Type TEntity Extends TMatrix
 
 	Global entity_list:TList=CreateList()
@@ -94,8 +96,7 @@ Type TEntity Extends TMatrix
 			global_inv_mat.Invert(global_mat)
 			For ent= EachIn child_list			
 '				ent.freshen(cycle)
-				ent.global_mat.overwrite(ent)
-				ent.global_mat.multiply2(global_mat)			
+				ent.local2global(global_mat,ent.global_mat)				
 				ent.dirty=True
 			Next		
 		EndIf
@@ -109,35 +110,26 @@ Type TEntity Extends TMatrix
 	End Method
 
 	Method AddParent(parent_ent:TEntity,glob=True)
-
 		If parent_ent=Null
 			parent_ent=entity_root
 		EndIf
-
 		If parent
 			ListRemove(parent.child_list,Self)
 		EndIf
-		
-		parent=parent_ent
-						
+		parent=parent_ent						
 		Overwrite(global_mat)		
-
 		If parent	'static root means entity_root above is null
 			ListAddLast(parent.child_list,Self)						
 'simon			Multiply(parent.global_inv_mat)
-		EndIf
-			
+		EndIf			
 		UpdateMat()
 	End Method
 		
-	Method GetParent:TEntity()
-	
+	Method GetParent:TEntity()	
 		If parent=entity_root
 			Return Null
 		EndIf
-
 		Return parent
-
 	End Method
 
 	Method CopyEntity:TEntity(parent_ent:TEntity=Null) Abstract
@@ -186,6 +178,8 @@ Type TEntity Extends TMatrix
 		If LOG_NEW
 			DebugLog "New TEntity"
 		EndIf
+		
+		self.ScaleEntity 1,1,1
 	
 	End Method
 	
@@ -260,37 +254,25 @@ Type TEntity Extends TMatrix
 		grid[3,1]:+ty
 		grid[3,2]:+tz
 		UpdateMat()
-
 	End Method
 	
 	Method ScaleEntity(x#,y#,z#,glob=False)
 		grid[0,3]=x
 		grid[1,3]=y
-		grid[2,3]=x
-
+		grid[2,3]=z
 		UpdateMat()
-
 	End Method
 
-	Method RotateEntity(x#,y#,z#,glob=False)
-Rem skid
-		rx=-x#
-		ry=y#
-		rz=z#
-		
-		' conv glob to local. pitch/yaw/roll always local to parent or global if no parent
-		If glob=True And parent<>Null
-
-			rx=rx+parent.EntityPitch(True)
-			ry=ry-parent.EntityYaw(True)
-			rz=rz-parent.EntityRoll(True)
-		
+	Method RotateEntity(x#,y#,z#,glob=False)	
+		If glob
+			OverWrite global_mat
+			JustRot x,y,z
+			Multiply parent.global_inv_mat
+		Else
+			JustRot(x,y,z)
 		EndIf
-EndRem		
-			UpdateMat()
-
 	End Method
-
+		
 	Method TurnEntity(x#,y#,z#,glob=False)
 		temp_mat.FromRot(x,y,z)
 		Multiply(temp_mat)
