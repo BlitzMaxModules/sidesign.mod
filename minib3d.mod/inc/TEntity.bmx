@@ -88,7 +88,7 @@ Type TEntity Extends TMatrix
 	
 	Method TransformEntity()
 		Local ent:TEntity
-		If dirty Or needclean
+		If True'dirty Or needclean
 			cycle=cycle+1
 			If(cycle=6) cycle=0
 			global_inv_mat.Invert(global_mat)

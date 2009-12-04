@@ -502,12 +502,12 @@ Type TGlobal
 	Function UpdateSprites(cam:TCamera,list:TList)
 
 		For Local sprite:TSprite=EachIn list
-		
+
 			If sprite.view_mode<>2
 			
-				Local x#=sprite.grid[3,0]
-				Local y#=sprite.grid[3,1]
-				Local z#=sprite.grid[3,2]
+				Local x#=sprite.global_mat.grid[3,0]
+				Local y#=sprite.global_mat.grid[3,1]
+				Local z#=sprite.global_mat.grid[3,2]
 			
 				sprite.mat_sp.Overwrite(cam)
 				sprite.mat_sp.grid[3,0]=x
@@ -528,7 +528,7 @@ Type TGlobal
 				
 			Else
 			
-				sprite.mat_sp.Overwrite(sprite)
+				sprite.mat_sp.Overwrite(sprite.global_mat)
 				
 				If sprite.scale_x#<>1.0 Or sprite.scale_y#<>1.0
 					sprite.mat_sp.Scale(sprite.scale_x#,sprite.scale_y#,1.0)
