@@ -1273,11 +1273,11 @@ Type TMesh Extends TEntity
 			'TMesh(Self).AddMesh(new_mesh)
 			'new_mesh.TransformMesh(Self.mat)
 			'new_mesh.AddMesh(mesh)
-			TransformMesh(Self.mat)
+			TransformMesh(Self)
 			AddMesh(mesh)
 		EndIf
 		
-		mesh=CollapseChildren(Self,mesh)
+		mesh=CollapseChildren(Self)
 
 		Return mesh
 
@@ -1293,7 +1293,7 @@ Type TMesh Extends TEntity
 				'TMesh(ent).AddMesh(new_mesh)
 				'new_mesh.TransformMesh(ent.mat)
 				'new_mesh.AddMesh(mesh)
-				TMesh(ent).TransformMesh(ent.mat)
+				TMesh(ent).TransformMesh(ent)
 				TMesh(ent).AddMesh(mesh)
 			EndIf
 			mesh=CollapseChildren(ent,mesh)
@@ -1903,11 +1903,11 @@ Type TMesh Extends TEntity
 			glPushMatrix()
 	
 			If TSprite(Self)=Null
-				glMultMatrixf(mat.grid)
+				glMultMatrixf(global_mat.grid)
 			Else
 				glMultMatrixf(mat_sp.grid)
 			EndIf
-					
+
 			If vbo																																																																																																																																																																																																																																																																																
 				glDrawElements(GL_TRIANGLES,surf.no_tris*3,GL_UNSIGNED_SHORT,Null)
 			Else

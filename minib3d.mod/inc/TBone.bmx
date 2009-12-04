@@ -85,7 +85,7 @@ Type TBone Extends TEntity
 			
 			If TBone(ent_c)=Null ' if child is not a bone
 						
-				Local mat:TMatrix=ent_p.mat.Copy()
+				Local mat:TMatrix=ent_p.Copy()
 			
 				' if parent is a bone, negate z value of matrix
 				If TBone(ent_p)<>Null
@@ -93,7 +93,7 @@ Type TBone Extends TEntity
 					'mat=TBone(ent_p).tform_mat
 				EndIf
 			
-				ent_c.mat.Overwrite(mat)
+				ent_c.Overwrite(mat)
 				ent_c.UpdateMat()
 				
 			EndIf

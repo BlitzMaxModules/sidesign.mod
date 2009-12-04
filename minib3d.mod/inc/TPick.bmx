@@ -185,12 +185,12 @@ Type TPick
 		
 			If ent.pick_mode=0 Or ent.Hidden()=True Then Continue
 						
-			C_UpdateVecObject(c_vec_i,ent.mat.grid[0,0],ent.mat.grid[0,1],-ent.mat.grid[0,2])
-			C_UpdateVecObject(c_vec_j,ent.mat.grid[1,0],ent.mat.grid[1,1],-ent.mat.grid[1,2])
-			C_UpdateVecObject(c_vec_k,-ent.mat.grid[2,0],-ent.mat.grid[2,1],ent.mat.grid[2,2])
+			C_UpdateVecObject(c_vec_i,ent.grid[0,0],ent.grid[0,1],-ent.grid[0,2])
+			C_UpdateVecObject(c_vec_j,ent.grid[1,0],ent.grid[1,1],-ent.grid[1,2])
+			C_UpdateVecObject(c_vec_k,-ent.grid[2,0],-ent.grid[2,1],ent.grid[2,2])
 			
 			C_UpdateMatrixObject(c_mat,c_vec_i,c_vec_j,c_vec_k)
-			C_UpdateVecObject(c_vec_v,ent.mat.grid[3,0],ent.mat.grid[3,1],-ent.mat.grid[3,2])
+			C_UpdateVecObject(c_vec_v,ent.grid[3,0],ent.grid[3,1],-ent.grid[3,2])
 			C_UpdateTFormObject(c_tform,c_mat,c_vec_v)
 			
 			' if pick mode is sphere or box then update collision info object to include entity radius/box info

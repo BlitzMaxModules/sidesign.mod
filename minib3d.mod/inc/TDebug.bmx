@@ -305,7 +305,7 @@ Type TDebug
 			tx=0
 			ty=ty+20
 			For Local ix=0 To 3
-				xx#=ent.mat.grid[ix,iy]
+				xx#=ent.grid[ix,iy]
 				If xx#<0.0001 And xx#>-0.0001 Then xx#=0
 				TBlitz2D.Text tx,ty,String(xx#)
 				tx=tx+100

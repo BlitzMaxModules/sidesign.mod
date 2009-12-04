@@ -8,7 +8,7 @@
 
 ' entity_root provides single dummy world pivot for transformation hierachy
 
-Type TEntity
+Type TEntity Extends TMatrix
 
 	Global entity_list:TList=CreateList()
 	
@@ -25,8 +25,6 @@ Type TEntity
 	Field parent:TEntity=entity_root
 
 ' local orientation scale and position in 4x4 land
-
-	Field mat:TMatrix=New TMatrix
 
 	Field cycle:Int
 	Field dirty:Int	
@@ -88,22 +86,22 @@ Type TEntity
 		Wend		
 	End Method
 	
-	Method Transform()
+	Method TransformEntity()
 		Local ent:TEntity
-		If dirty
+		If dirty Or needclean
 			cycle=cycle+1
 			If(cycle=6) cycle=0
 			global_inv_mat.Invert(global_mat)
 			For ent= EachIn child_list			
-				ent.mat.freshen(cycle)
-				ent.global_mat.overwrite(ent.mat)
-				ent.global_mat.multiply(global_mat)			
+'				ent.freshen(cycle)
+				ent.global_mat.overwrite(ent)
+				ent.global_mat.multiply2(global_mat)			
 				ent.dirty=True
 			Next		
 		EndIf
 		If dirty Or needclean
 			For ent= EachIn child_list
-				ent.Transform
+				ent.TransformEntity
 			Next
 			dirty=False
 			needclean=False
@@ -116,19 +114,17 @@ Type TEntity
 			parent_ent=entity_root
 		EndIf
 
-		If parent<>Null
-			For Local ent:TEntity=EachIn parent.child_list
-				If ent=Self Then ListRemove(parent.child_list,Self)
-			Next
+		If parent
+			ListRemove(parent.child_list,Self)
 		EndIf
 		
 		parent=parent_ent
 						
-		mat.Overwrite(global_mat)			
-		If parent	' warning - may be static root	
-			' add self to parent_ent child list
+		Overwrite(global_mat)		
+
+		If parent	'static root means entity_root above is null
 			ListAddLast(parent.child_list,Self)						
-			mat.Multiply(parent.global_inv_mat)
+'simon			Multiply(parent.global_inv_mat)
 		EndIf
 			
 		UpdateMat()
@@ -172,9 +168,9 @@ Type TEntity
 		
 		' update matrix
 		If cam.parent<>Null
-			cam.mat.Overwrite(cam.parent.mat)
+			cam.Overwrite(cam.parent)
 		Else
-			cam.mat.LoadIdentity()
+			cam.LoadIdentity()
 		EndIf
 		
 		cam.name$=name$
@@ -223,7 +219,6 @@ Type TEntity
 		EndIf
 		
 		parent=Null
-		mat=Null
 		brush=Null
 		link=Null
 	
@@ -242,16 +237,16 @@ Type TEntity
 		If glob=True
 			parent.global_inv_mat.Transform(x,y,z)
 		EndIf
-		mat.grid[3,0]=x
-		mat.grid[3,1]=y
-		mat.grid[3,2]=z
+		grid[3,0]=x
+		grid[3,1]=y
+		grid[3,2]=z
 		UpdateMat()		
 	End Method
 		
 	Method MoveEntity(mx#,my#,mz#)
-		mat.grid[3,0]:+mx
-		mat.grid[3,1]:+my
-		mat.grid[3,2]:-mz
+		grid[3,0]:+mx
+		grid[3,1]:+my
+		grid[3,2]:-mz
 		UpdateMat()
 	End Method
 
@@ -259,19 +254,19 @@ Type TEntity
 		If glob=True
 			parent.global_inv_mat.TransformVector(tx,ty,tz)
 		Else
-			mat.TransformVector(tx,ty,tz)
+			TransformVector(tx,ty,tz)
 		EndIf
-		mat.grid[3,0]:+tx
-		mat.grid[3,1]:+ty
-		mat.grid[3,2]:+tz
+		grid[3,0]:+tx
+		grid[3,1]:+ty
+		grid[3,2]:+tz
 		UpdateMat()
 
 	End Method
 	
 	Method ScaleEntity(x#,y#,z#,glob=False)
-		mat.grid[0,3]=x
-		mat.grid[1,3]=y
-		mat.grid[2,3]=x
+		grid[0,3]=x
+		grid[1,3]=y
+		grid[2,3]=x
 
 		UpdateMat()
 
@@ -298,7 +293,7 @@ EndRem
 
 	Method TurnEntity(x#,y#,z#,glob=False)
 		temp_mat.FromRot(x,y,z)
-		mat.Multiply(temp_mat)
+		Multiply(temp_mat)
 		UpdateMat()
 	End Method
 
@@ -317,7 +312,7 @@ EndRem
 		Local pitch#=ATan2(ydiff#,dist22#)
 		Local yaw#=ATan2(xdiff#,-zdiff#)
 
-		Self.RotateEntity pitch#,yaw#,roll#,True
+		RotateEntity pitch#,yaw#,roll#,True
 
 	End Method
 		
@@ -630,52 +625,38 @@ EndRem
 	' Entity state
 
 	Method EntityX#(glob=False)
-	
 		If glob=False		
-			Return mat.grid[3,0]		
+			Return grid[3,0]		
 		Else		
 			Return global_mat.grid[3,0]
 		EndIf
-	
 	End Method
 	
-	Method EntityY#(glob=False)
-	
+	Method EntityY#(glob=False)	
 		If glob=False
-		
-			Return mat.grid[3,1]		
-		
+			Return grid[3,1]		
 		Else
-		
-			Return mat.grid[3,1]
-		
+			Return global_mat.grid[3,1]
 		EndIf
-	
 	End Method
 	
-	Method EntityZ#(glob=False)
-	
-		If glob=False
-		
-			Return -mat.grid[3,2]		
-		
-		Else
-		
-			Return -mat.grid[3,2]
-		
-		EndIf
-	
+	Method EntityZ#(glob=False)	
+		If glob=False		
+			Return -grid[3,2]				
+		Else		
+			Return -global_mat.grid[3,2]		
+		EndIf	
 	End Method
 
 	Method EntityPitch#(glob=False)
 		
 		If glob=False
 		
-			Return -ATan2( mat.grid[2,1],Sqr( mat.grid[2,0]*mat.grid[2,0]+mat.grid[2,2]*mat.grid[2,2] ) )	
+			Return -ATan2( grid[2,1],Sqr( grid[2,0]*grid[2,0]+grid[2,2]*grid[2,2] ) )	
 		Else
 		
-			Local ang#=ATan2( mat.grid[2,1],Sqr( mat.grid[2,0]*mat.grid[2,0]+mat.grid[2,2]*mat.grid[2,2] ) )
-			'Local ang#=ASin(mat.grid[2,1])
+			Local ang#=ATan2( grid[2,1],Sqr( grid[2,0]*grid[2,0]+grid[2,2]*grid[2,2] ) )
+			'Local ang#=ASin(grid[2,1])
 			'If ang#=nan Then ang#=0
 			If ang#<=0.0001 And ang#>=-0.0001 Then ang#=0
 		
@@ -689,16 +670,16 @@ EndRem
 		
 		If glob=False
 		
-			Local a#=mat.grid[2,0]
-			Local b#=mat.grid[2,2]
+			Local a#=grid[2,0]
+			Local b#=grid[2,2]
 			If a#<=0.0001 And a#>=-0.0001 Then a#=0
 			If b#<=0.0001 And b#>=-0.0001 Then b#=0
 			Return ATan2(a#,b#)
 			
 		Else
 		
-			Local a#=mat.grid[2,0]
-			Local b#=mat.grid[2,2]
+			Local a#=grid[2,0]
+			Local b#=grid[2,2]
 			If a#<=0.0001 And a#>=-0.0001 Then a#=0
 			If b#<=0.0001 And b#>=-0.0001 Then b#=0
 			Return ATan2(a#,b#)
@@ -711,16 +692,16 @@ EndRem
 		
 		If glob=False
 		
-			Local a#=mat.grid[0,1]
-			Local b#=mat.grid[1,1]
+			Local a#=grid[0,1]
+			Local b#=grid[1,1]
 			If a#<=0.0001 And a#>=-0.0001 Then a#=0
 			If b#<=0.0001 And b#>=-0.0001 Then b#=0
 			Return ATan2(a#,b#)
 			
 		Else
 		
-			Local a#=mat.grid[0,1]
-			Local b#=mat.grid[1,1]
+			Local a#=grid[0,1]
+			Local b#=grid[1,1]
 			If a#<=0.0001 And a#>=-0.0001 Then a#=0
 			If b#<=0.0001 And b#>=-0.0001 Then b#=0
 			Return ATan2(a#,b#)
@@ -839,7 +820,7 @@ EndRem
 	
 	Function TFormPoint(x#,y#,z#,src_ent:TEntity,dest_ent:TEntity)
 	
-		entity_root.Transform()
+		entity_root.TransformEntity()
 	
 		If src_ent And src_ent.parent
 			src_ent.parent.global_mat.Transform(x,y,z)
@@ -857,7 +838,7 @@ EndRem
 
 	Function TFormVector(x#,y#,z#,src_ent:TEntity,dest_ent:TEntity)
 	
-		entity_root.Transform()
+		entity_root.TransformEntity()
 	
 		If src_ent.parent
 			src_ent.parent.global_mat.TransformVector(x,y,z)
@@ -875,7 +856,7 @@ EndRem
 
 	Function TFormNormal(x#,y#,z#,src_ent:TEntity,dest_ent:TEntity)
 
-		entity_root.Transform()
+		entity_root.TransformEntity()
 
 		TEntity.TFormVector(x#,y#,z#,src_ent,dest_ent)
 		
@@ -907,7 +888,7 @@ EndRem
 	
 	Method GetMatElement#(row,col)
 	
-		Return mat.grid[row,col]
+		Return grid[row,col]
 	
 	End Method
 	
@@ -1136,7 +1117,7 @@ EndRem
 		If glob
 			Return global_mat.grid[0,3]
 		Else
-			Return mat.grid[0,3]
+			Return grid[0,3]
 		EndIf
 		
 	End Method
@@ -1146,7 +1127,7 @@ EndRem
 		If glob
 			Return global_mat.grid[1,3]
 		Else
-			Return mat.grid[1,3]
+			Return grid[1,3]
 		EndIf
 		
 	End Method
@@ -1156,7 +1137,7 @@ EndRem
 		If glob
 			Return global_mat.grid[2,3]
 		Else
-			Return mat.grid[2,3]
+			Return grid[2,3]
 		EndIf
 		
 	End Method
@@ -1315,9 +1296,9 @@ EndRem
 	' optimised
 	Method EntityDistanceSquared#(ent2:TEntity)
 
-		Local xd# = ent2.mat.grid[3,0]-mat.grid[3,0]
-		Local yd# = ent2.mat.grid[3,1]-mat.grid[3,1]
-		Local zd# = -ent2.mat.grid[3,2]+mat.grid[3,2]
+		Local xd# = ent2.grid[3,0]-grid[3,0]
+		Local yd# = ent2.grid[3,1]-grid[3,1]
+		Local zd# = -ent2.grid[3,2]+grid[3,2]
 				
 		Return xd*xd + yd*yd + zd*zd
 		

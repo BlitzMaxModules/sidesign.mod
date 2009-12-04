@@ -31,7 +31,6 @@ Type TSprite Extends TMesh
 		sprite.fade_near#=fade_near
 		sprite.fade_far#=fade_far
 		
-		sprite.brush=Null
 		sprite.brush=brush.Copy()
 		
 		sprite.cull_radius#=cull_radius#

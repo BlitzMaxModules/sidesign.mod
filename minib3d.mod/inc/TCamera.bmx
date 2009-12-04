@@ -509,7 +509,7 @@ Type TCamera Extends TEntity
 		
 		accPerspective(ATan((1.0/(zoom#*ratio#)))*2.0,ratio#,range_near#,range_far#,jx#,jy#,0.0,0.0,1.0)
 
-		Local new_mat:TMatrix=mat.Inverse()
+		Local new_mat:TMatrix=Inverse()
 		glLoadMatrixf(new_mat.grid)
 
 		' Get projection/model/viewport info - for use with CameraProject

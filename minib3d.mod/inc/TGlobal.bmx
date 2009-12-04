@@ -157,7 +157,7 @@ Type TGlobal
 	End Function
 
 	Function TransformWorld()
-		TEntity.entity_root.Transform()
+		TEntity.entity_root.TransformEntity()
 	End Function
 			
 	Function UpdateWorld(anim_speed#=1.0)
@@ -253,6 +253,8 @@ Type TGlobal
 	End Function
 
 	Function RenderWorld()
+
+		TransformWorld()
 	
 		' if anti-aliasing enabled then call RenderWorldAA
 		If aa Then RenderWorldAA();Return
@@ -503,15 +505,14 @@ Type TGlobal
 		
 			If sprite.view_mode<>2
 			
-				Local x#=sprite.mat.grid[3,0]
-				Local y#=sprite.mat.grid[3,1]
-				Local z#=sprite.mat.grid[3,2]
+				Local x#=sprite.grid[3,0]
+				Local y#=sprite.grid[3,1]
+				Local z#=sprite.grid[3,2]
 			
-				sprite.mat.Overwrite(cam.mat)
-				sprite.mat.grid[3,0]=x
-				sprite.mat.grid[3,1]=y
-				sprite.mat.grid[3,2]=z
-				sprite.mat_sp.Overwrite(sprite.mat)
+				sprite.mat_sp.Overwrite(cam)
+				sprite.mat_sp.grid[3,0]=x
+				sprite.mat_sp.grid[3,1]=y
+				sprite.mat_sp.grid[3,2]=z
 				
 				If sprite.angle#<>0.0
 					sprite.mat_sp.RotateRoll(sprite.angle#)
@@ -527,7 +528,7 @@ Type TGlobal
 				
 			Else
 			
-				sprite.mat_sp.Overwrite(sprite.mat)
+				sprite.mat_sp.Overwrite(sprite)
 				
 				If sprite.scale_x#<>1.0 Or sprite.scale_y#<>1.0
 					sprite.mat_sp.Scale(sprite.scale_x#,sprite.scale_y#,1.0)

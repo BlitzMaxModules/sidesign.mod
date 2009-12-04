@@ -424,18 +424,18 @@ EndRem
 						' if ent nested then add parent
 						If node_level>0 Then piv.AddParent(parent_ent)
 						
-						TQuaternion.QuatToMat(-n_qw#,n_qx#,n_qy#,-n_qz#,piv.mat)
+						TQuaternion.QuatToMat(-n_qw#,n_qx#,n_qy#,-n_qz#,piv)
 										
-						piv.mat.grid[3,0]=n_px#
-						piv.mat.grid[3,1]=n_py#
-						piv.mat.grid[3,2]=n_pz#
+						piv.grid[3,0]=n_px#
+						piv.grid[3,1]=n_py#
+						piv.grid[3,2]=n_pz#
 						
-						piv.mat.Scale(n_sx#,n_sy#,n_sz#)
+						piv.Scale(n_sx#,n_sy#,n_sz#)
 							
 						If piv.parent<>Null
-							Local new_mat:TMatrix=piv.parent.mat.Copy()
-							new_mat.Multiply(piv.mat)
-							piv.mat.Overwrite(new_mat)'.Multiply(mat)
+							Local new_mat:TMatrix=piv.parent.Copy()
+							new_mat.Multiply(piv)
+							piv.Overwrite(new_mat)'.Multiply(mat)
 						EndIf				
 				
 					EndIf
@@ -475,18 +475,18 @@ End Rem
 					' if ent nested then add parent
 					If node_level>0 Then mesh.AddParent(parent_ent)
 	
-					TQuaternion.QuatToMat(-n_qw#,n_qx#,n_qy#,-n_qz#,mesh.mat)
+					TQuaternion.QuatToMat(-n_qw#,n_qx#,n_qy#,-n_qz#,mesh)
 									
-					mesh.mat.grid[3,0]=n_px#
-					mesh.mat.grid[3,1]=n_py#
-					mesh.mat.grid[3,2]=n_pz#
+					mesh.grid[3,0]=n_px#
+					mesh.grid[3,1]=n_py#
+					mesh.grid[3,2]=n_pz#
 					
-					mesh.mat.Scale(n_sx#,n_sy#,n_sz#)
+					mesh.Scale(n_sx#,n_sy#,n_sz#)
 					
 					If mesh.parent<>Null
-						Local new_mat:TMatrix=mesh.parent.mat.Copy()
-						new_mat.Multiply(mesh.mat)
-						mesh.mat.Overwrite(new_mat)'.Multiply(mat)
+						Local new_mat:TMatrix=mesh.parent.Copy()
+						new_mat.Multiply(mesh)
+						mesh.Overwrite(new_mat)'.Multiply(mat)
 					EndIf				
 	
 				Case "VRTS"
@@ -767,19 +767,19 @@ End Rem
 					' if ent nested then add parent
 					If node_level>0 Then bo_bone.AddParent(parent_ent)
 					
-					TQuaternion.QuatToMat(-bo_bone.n_qw#,bo_bone.n_qx#,bo_bone.n_qy#,-bo_bone.n_qz#,bo_bone.mat)
+					TQuaternion.QuatToMat(-bo_bone.n_qw#,bo_bone.n_qx#,bo_bone.n_qy#,-bo_bone.n_qz#,bo_bone)
 					
-					bo_bone.mat.grid[3,0]=bo_bone.n_px#
-					bo_bone.mat.grid[3,1]=bo_bone.n_py#
-					bo_bone.mat.grid[3,2]=bo_bone.n_pz#
+					bo_bone.grid[3,0]=bo_bone.n_px#
+					bo_bone.grid[3,1]=bo_bone.n_py#
+					bo_bone.grid[3,2]=bo_bone.n_pz#
 					
 					If bo_bone.parent<>Null And TBone(bo_bone.parent)<>Null ' And... onwards needed to prevent inv_mat being incorrect if external parent supplied
-						Local new_mat:TMatrix=bo_bone.parent.mat.Copy()
-						new_mat.Multiply(bo_bone.mat)
-						bo_bone.mat.Overwrite(new_mat)
+						Local new_mat:TMatrix=bo_bone.parent.Copy()
+						new_mat.Multiply(bo_bone)
+						bo_bone.Overwrite(new_mat)
 					EndIf
 
-					bo_bone.inv_mat=bo_bone.mat.Inverse()
+					bo_bone.inv_mat=bo_bone.Inverse()
 				
 					If new_tag$<>"KEYS"
 						bo_bone.EntityListAdd(TEntity.entity_list)

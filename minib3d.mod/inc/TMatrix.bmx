@@ -138,7 +138,11 @@ EndRem
 	' overwrite - overwrites self with matrix passed as parameter
 	
 	Method Overwrite(mat:TMatrix)
-		memcpy_ grid,mat.grid,4*4*4
+	For Local i=0 Until 4
+	For Local j=0 Until 4
+	grid[i,j]=mat.grid[i,j]
+	Next
+	Next
 	End Method
 	
 
@@ -177,6 +181,47 @@ EndRem
 		grid[3,1]=m31
 		grid[3,2]=m32
 		'grid[3,3]=m33
+		
+	End Method
+
+	Method Multiply2(mat:TMatrix)
+		Local sgrid#[,]
+		
+		sgrid=mat.grid	
+		Local m00# = sgrid#[0,0]*grid#[0,0] + sgrid#[1,0]*grid#[0,1] + sgrid#[2,0]*grid#[0,2] + sgrid#[3,0]*grid#[0,3]
+		Local m01# = sgrid#[0,1]*grid#[0,0] + sgrid#[1,1]*grid#[0,1] + sgrid#[2,1]*grid#[0,2] + sgrid#[3,1]*grid#[0,3]
+		Local m02# = sgrid#[0,2]*grid#[0,0] + sgrid#[1,2]*grid#[0,1] + sgrid#[2,2]*grid#[0,2] + sgrid#[3,2]*grid#[0,3]
+		Local m03# = sgrid#[0,3]*grid#[0,0] + sgrid#[1,3]*grid#[0,1] + sgrid#[2,3]*grid#[0,2] + sgrid#[3,3]*grid#[0,3]
+		Local m10# = sgrid#[0,0]*grid#[1,0] + sgrid#[1,0]*grid#[1,1] + sgrid#[2,0]*grid#[1,2] + sgrid#[3,0]*grid#[1,3]
+		Local m11# = sgrid#[0,1]*grid#[1,0] + sgrid#[1,1]*grid#[1,1] + sgrid#[2,1]*grid#[1,2] + sgrid#[3,1]*grid#[1,3]
+		Local m12# = sgrid#[0,2]*grid#[1,0] + sgrid#[1,2]*grid#[1,1] + sgrid#[2,2]*grid#[1,2] + sgrid#[3,2]*grid#[1,3]
+		Local m13# = sgrid#[0,3]*grid#[1,0] + sgrid#[1,3]*grid#[1,1] + sgrid#[2,3]*grid#[1,2] + sgrid#[3,3]*grid#[1,3]
+		Local m20# = sgrid#[0,0]*grid#[2,0] + sgrid#[1,0]*grid#[2,1] + sgrid#[2,0]*grid#[2,2] + sgrid#[3,0]*grid#[2,3]
+		Local m21# = sgrid#[0,1]*grid#[2,0] + sgrid#[1,1]*grid#[2,1] + sgrid#[2,1]*grid#[2,2] + sgrid#[3,1]*grid#[2,3]
+		Local m22# = sgrid#[0,2]*grid#[2,0] + sgrid#[1,2]*grid#[2,1] + sgrid#[2,2]*grid#[2,2] + sgrid#[3,2]*grid#[2,3]
+		Local m23# = sgrid#[0,3]*grid#[2,0] + sgrid#[1,3]*grid#[2,1] + sgrid#[2,3]*grid#[2,2] + sgrid#[3,3]*grid#[2,3]
+		Local m30# = sgrid#[0,0]*grid#[3,0] + sgrid#[1,0]*grid#[3,1] + sgrid#[2,0]*grid#[3,2] + sgrid#[3,0]*grid#[3,3]
+		Local m31# = sgrid#[0,1]*grid#[3,0] + sgrid#[1,1]*grid#[3,1] + sgrid#[2,1]*grid#[3,2] + sgrid#[3,1]*grid#[3,3]
+		Local m32# = sgrid#[0,2]*grid#[3,0] + sgrid#[1,2]*grid#[3,1] + sgrid#[2,2]*grid#[3,2] + sgrid#[3,2]*grid#[3,3]
+		Local m33# = sgrid#[0,3]*grid#[3,0] + sgrid#[1,3]*grid#[3,1] + sgrid#[2,3]*grid#[3,2] + sgrid#[3,3]*grid#[3,3]
+
+	
+		grid[0,0]=m00
+		grid[0,1]=m01
+		grid[0,2]=m02
+		grid[0,3]=m03
+		grid[1,0]=m10
+		grid[1,1]=m11
+		grid[1,2]=m12
+		grid[1,3]=m13
+		grid[2,0]=m20
+		grid[2,1]=m21
+		grid[2,2]=m22
+		grid[2,3]=m23
+		grid[3,0]=m30
+		grid[3,1]=m31
+		grid[3,2]=m32
+		grid[3,3]=m33
 		
 	End Method
 

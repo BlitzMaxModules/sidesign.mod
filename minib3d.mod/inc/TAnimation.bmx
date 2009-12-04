@@ -169,11 +169,11 @@ Type TAnimation
 				TBone(bent).kqy=y3
 				TBone(bent).kqz=z3
 		
-				TQuaternion.QuatToMat(w3,x3,y3,z3,TBone(bent).mat)
+				TQuaternion.QuatToMat(w3,x3,y3,z3,TBone(bent))
 	
-				TBone(bent).mat.grid[3,0]=px3
-				TBone(bent).mat.grid[3,1]=py3
-				TBone(bent).mat.grid[3,2]=pz3
+				TBone(bent).grid[3,0]=px3
+				TBone(bent).grid[3,1]=py3
+				TBone(bent).grid[3,2]=pz3
 
 				' store local position/rotation values. will be needed to maintain bone positions when positionentity etc is called
 				Local pitch#=0
@@ -191,14 +191,14 @@ Rem
 EndRem				
 				
 				' set mat2 to equal mat
-				TBone(bent).mat2.Overwrite(TBone(bent).mat)
+				TBone(bent).Overwrite(TBone(bent))
 				
 				' set mat - includes root parent transformation
 				' mat is used for store global bone positions, needed when displaying actual bone positions and attaching entities to bones
 				If TBone(bent).parent<>Null
-					Local new_mat:TMatrix=TBone(bent).parent.mat.Copy()
-					new_mat.Multiply(TBone(bent).mat)
-					TBone(bent).mat.Overwrite(new_mat)
+					Local new_mat:TMatrix=TBone(bent).parent.Copy()
+					new_mat.Multiply(TBone(bent))
+					TBone(bent).Overwrite(new_mat)
 				EndIf
 				
 				' set mat2 - does not include root parent transformation
@@ -361,11 +361,11 @@ Assert 0'skid!
 				EndIf
 				no_keys=False
 			
-				TQuaternion.QuatToMat(w3,x3,y3,z3,TBone(bent).mat)
+				TQuaternion.QuatToMat(w3,x3,y3,z3,TBone(bent))
 	
-				TBone(bent).mat.grid[3,0]=px3
-				TBone(bent).mat.grid[3,1]=py3
-				TBone(bent).mat.grid[3,2]=pz3
+				TBone(bent).grid[3,0]=px3
+				TBone(bent).grid[3,1]=py3
+				TBone(bent).grid[3,2]=pz3
 		
 				' store local position/rotation values. will be needed to maintain bone positions when positionentity etc is called
 				Local pitch#=0
@@ -382,14 +382,14 @@ Rem skid
 EndRem				
 				
 				' set mat2 to equal mat
-				TBone(bent).mat2.Overwrite(TBone(bent).mat)
+				TBone(bent).mat2.Overwrite(TBone(bent))
 				
 				' set mat - includes root parent transformation
 				' mat is used for store global bone positions, needed when displaying actual bone positions and attaching entities to bones
 				If TBone(bent).parent<>Null
-					Local new_mat:TMatrix=TBone(bent).parent.mat.Copy()
-					new_mat.Multiply(TBone(bent).mat)
-					TBone(bent).mat.Overwrite(new_mat)
+					Local new_mat:TMatrix=TBone(bent).parent.Copy()
+					new_mat.Multiply(TBone(bent))
+					TBone(bent).Overwrite(new_mat)
 				EndIf
 				
 				' set mat2 - does not include root parent transformation

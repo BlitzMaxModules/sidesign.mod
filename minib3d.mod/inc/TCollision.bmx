@@ -132,12 +132,12 @@ Function UpdateCollisions()
 							
 							If QuickCheck(ent,ent2)=False Then Continue ' quick check to see if entities are colliding
 		
-							C_UpdateVecObject(c_vec_i,ent2.mat.grid[0,0],ent2.mat.grid[0,1],-ent2.mat.grid[0,2])
-							C_UpdateVecObject(c_vec_j,ent2.mat.grid[1,0],ent2.mat.grid[1,1],-ent2.mat.grid[1,2])
-							C_UpdateVecObject(c_vec_k,-ent2.mat.grid[2,0],-ent2.mat.grid[2,1],ent2.mat.grid[2,2])
+							C_UpdateVecObject(c_vec_i,ent2.grid[0,0],ent2.grid[0,1],-ent2.grid[0,2])
+							C_UpdateVecObject(c_vec_j,ent2.grid[1,0],ent2.grid[1,1],-ent2.grid[1,2])
+							C_UpdateVecObject(c_vec_k,-ent2.grid[2,0],-ent2.grid[2,1],ent2.grid[2,2])
 					
 							C_UpdateMatrixObject(c_mat,c_vec_i,c_vec_j,c_vec_k)
-							C_UpdateVecObject(c_vec_v,ent2.mat.grid[3,0],ent2.mat.grid[3,1],-ent2.mat.grid[3,2])
+							C_UpdateVecObject(c_vec_v,ent2.grid[3,0],ent2.grid[3,1],-ent2.grid[3,2])
 							C_UpdateTFormObject(c_tform,c_mat,c_vec_v)
 		
 							' if pick mode is sphere or box then update collision info object to include entity radius/box info

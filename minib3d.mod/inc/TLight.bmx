@@ -150,7 +150,7 @@ Type TLight Extends TEntity
 
 		glPushMatrix()
 
-		glMultMatrixf(mat.grid)
+		glMultMatrixf(grid)
 		
 		Local z#=1.0
 		Local w#=0.0
